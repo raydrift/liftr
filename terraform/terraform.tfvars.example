@@ -1,0 +1,11 @@
+# Copy this to terraform.tfvars and fill in your values
+# NEVER commit terraform.tfvars to git — add it to .gitignore
+
+subscription_id      = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+resource_group_name  = "your-existing-rg-name"
+location             = "eastus"
+app_name             = "rohitfit"
+storage_account_name = "rohitfitstore"   # Must be globally unique, 3-24 chars
+
+# Generate a random secret: openssl rand -hex 32
+api_secret_key = "your-random-secret-here"

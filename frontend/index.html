@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#080808">
+<title>ROHIT.FIT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;600;700;900&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   TOKENS
+══════════════════════════════════════════ */
+:root {
+  --bg:        #080808;
+  --bg2:       #0f0f0f;
+  --glass:     rgba(255,255,255,0.04);
+  --glass2:    rgba(255,255,255,0.07);
+  --border:    rgba(255,255,255,0.08);
+  --border2:   rgba(255,255,255,0.14);
+  --ink:       #f5f0eb;
+  --ink2:      #888078;
+  --ink3:      #3d3830;
+  --push:      #ff4d1c;
+  --push2:     #ff7a50;
+  --pull:      #1c7aff;
+  --pull2:     #5aa3ff;
+  --legs:      #00d97e;
+  --legs2:     #4df0a8;
+  --gold:      #f0b429;
+  --red:       #ff3b3b;
+  --glow-push: rgba(255,77,28,0.35);
+  --glow-pull: rgba(28,122,255,0.35);
+  --glow-legs: rgba(0,217,126,0.35);
+  --r:         16px;
+  --tap:       52px;
+}
+
+/* ══════════════════════════════════════════
+   RESET + BASE
+══════════════════════════════════════════ */
+*, *::before, *::after {
+  box-sizing: border-box; margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Space Grotesk', sans-serif;
+  min-height: 100vh;
+  padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: 'Space Grotesk', sans-serif; cursor: pointer; border: none; background: none; color: inherit; }
+input[type=number] { -moz-appearance: textfield; }
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+/* ══════════════════════════════════════════
+   NOISE TEXTURE OVERLAY
+══════════════════════════════════════════ */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 200px;
+}
+
+/* ══════════════════════════════════════════
+   ANIMATED BACKGROUND ORBS
+══════════════════════════════════════════ */
+.orb-field {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+}
+.orb {
+  position: absolute; border-radius: 50%; filter: blur(80px);
+  opacity: 0; animation: orbFloat 12s ease-in-out infinite;
+}
+.orb-1 { width: 400px; height: 400px; background: var(--glow-push); top: -100px; right: -100px; animation-delay: 0s; }
+.orb-2 { width: 350px; height: 350px; background: var(--glow-pull); bottom: 100px; left: -150px; animation-delay: 4s; }
+.orb-3 { width: 300px; height: 300px; background: var(--glow-legs); top: 40%; left: 40%; animation-delay: 8s; }
+
+@keyframes orbFloat {
+  0%   { opacity: 0; transform: scale(0.8) translate(0,0); }
+  25%  { opacity: 0.6; }
+  50%  { opacity: 0.4; transform: scale(1.1) translate(20px, -30px); }
+  75%  { opacity: 0.6; }
+  100% { opacity: 0; transform: scale(0.8) translate(0,0); }
+}
+
+/* ══════════════════════════════════════════
+   SPLASH / LOADER
+══════════════════════════════════════════ */
+#splash {
+  position: fixed; inset: 0; z-index: 999;
+  background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 24px;
+  transition: opacity 0.5s ease, visibility 0.5s;
+}
+#splash.gone { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.splash-logo {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 42px; font-weight: 900;
+  letter-spacing: -2px;
+  background: linear-gradient(135deg, #ff4d1c, #ff7a50, #f0b429);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  animation: logoPulse 1.2s ease-in-out infinite alternate;
+}
+@keyframes logoPulse { from { filter: brightness(1); } to { filter: brightness(1.3); } }
+
+.splash-bar {
+  width: 160px; height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px; overflow: hidden;
+}
+.splash-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--push), var(--gold));
+  border-radius: 2px;
+  animation: loadBar 1.4s ease forwards;
+}
+@keyframes loadBar { to { width: 100%; } }
+
+.splash-text {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px; color: var(--ink2); letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+/* ══════════════════════════════════════════
+   BOTTOM NAV — frosted glass pill
+══════════════════════════════════════════ */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  display: flex; justify-content: center;
+}
+
+.nav-pill {
+  display: flex; gap: 4px;
+  background: rgba(15,15,15,0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border2);
+  border-radius: 100px;
+  padding: 6px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.nav-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; padding: 8px 18px; border-radius: 100px;
+  font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--ink2); transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  min-width: 60px; min-height: var(--tap);
+  position: relative;
+}
+
+.nav-btn .nav-icon {
+  font-size: 20px; line-height: 1;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.nav-btn.active {
+  background: var(--glass2);
+  color: var(--ink);
+}
+
+.nav-btn.active .nav-icon { transform: scale(1.15) translateY(-1px); }
+
+.nav-btn.active::after {
+  content: '';
+  position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
+  width: 20px; height: 2px; border-radius: 1px;
+  background: var(--push);
+  animation: dotPop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes dotPop { from { width: 0; opacity: 0; } to { width: 20px; opacity: 1; } }
+
+/* ══════════════════════════════════════════
+   PAGES
+══════════════════════════════════════════ */
+.page {
+  display: none; position: relative; z-index: 1;
+  padding: 0 16px 24px; max-width: 600px; margin: 0 auto;
+}
+.page.active {
+  display: block;
+  animation: pageIn 0.35s cubic-bezier(0.22,1,0.36,1);
+}
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ══════════════════════════════════════════
+   PAGE HEADERS
+══════════════════════════════════════════ */
+.page-header {
+  padding: 24px 0 20px;
+  display: flex; align-items: flex-end; justify-content: space-between;
+}
+
+.page-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 26px; font-weight: 700;
+  letter-spacing: -1.5px; line-height: 1;
+}
+
+.page-title span { color: var(--push); }
+.page-sub {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px; color: var(--ink3);
+  letter-spacing: 1px; margin-top: 6px;
+}
+
+/* ══════════════════════════════════════════
+   GLASS CARDS
+══════════════════════════════════════════ */
+.card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.card:active { transform: scale(0.995); }
+
+.card-glow-push { box-shadow: 0 0 0 0 var(--glow-push); transition: box-shadow 0.3s; }
+.card-glow-push:focus-within { box-shadow: 0 0 0 2px rgba(255,77,28,0.3); border-color: rgba(255,77,28,0.4); }
+
+/* ══════════════════════════════════════════
+   ── PLAN PAGE ──
+══════════════════════════════════════════ */
+.day-scroll {
+  display: flex; gap: 8px; overflow-x: auto;
+  margin: 0 -16px; padding: 0 16px 16px;
+  scrollbar-width: none;
+}
+.day-scroll::-webkit-scrollbar { display: none; }
+
+.day-chip {
+  flex-shrink: 0; display: flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border-radius: 100px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.3px;
+  border: 1.5px solid var(--border);
+  color: var(--ink2); background: var(--glass);
+  transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  min-height: 44px; white-space: nowrap;
+  cursor: pointer;
+}
+
+.day-chip .chip-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: currentColor; opacity: 0.4;
+  transition: opacity 0.2s, transform 0.3s;
+}
+
+.day-chip.active { color: var(--ink); border-color: var(--border2); background: var(--glass2); }
+.day-chip.active .chip-dot { opacity: 1; transform: scale(1.3); }
+
+.day-chip.c-push.active { border-color: rgba(255,77,28,0.5); background: rgba(255,77,28,0.08); }
+.day-chip.c-push .chip-dot { background: var(--push); }
+.day-chip.c-pull.active { border-color: rgba(28,122,255,0.5); background: rgba(28,122,255,0.08); }
+.day-chip.c-pull .chip-dot { background: var(--pull); }
+.day-chip.c-legs.active { border-color: rgba(0,217,126,0.5); background: rgba(0,217,126,0.08); }
+.day-chip.c-legs .chip-dot { background: var(--legs); }
+
+/* Plan exercise card */
+.plan-ex-card {
+  margin-bottom: 10px; border-radius: var(--r);
+  border: 1px solid var(--border); overflow: hidden;
+  background: var(--glass);
+  animation: cardIn 0.4s cubic-bezier(0.22,1,0.36,1) both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.plan-ex-head {
+  display: flex; align-items: center; padding: 16px;
+  gap: 14px; cursor: pointer;
+}
+
+.plan-ex-num {
+  font-family: 'Space Mono', monospace; font-size: 10px;
+  color: var(--ink3); width: 20px; flex-shrink: 0;
+}
+
+.plan-ex-info { flex: 1; }
+.plan-ex-name { font-size: 14px; font-weight: 700; }
+.plan-ex-sub { font-size: 11px; color: var(--ink2); margin-top: 2px; font-family: 'Space Mono', monospace; }
+
+.plan-ex-badge {
+  font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700;
+  padding: 5px 12px; border-radius: 100px;
+  flex-shrink: 0;
+}
+
+.plan-ex-body {
+  display: none; border-top: 1px solid var(--border);
+  padding: 14px 16px 16px;
+}
+
+.plan-ex-card.open .plan-ex-body { display: block; }
+
+.plan-detail-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.plan-detail-row:last-child { border-bottom: none; }
+.plan-detail-label { color: var(--ink2); }
+.plan-detail-val { font-family: 'Space Mono', monospace; font-size: 12px; }
+
+.progress-target {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-family: 'Space Mono', monospace;
+  color: var(--legs); background: rgba(0,217,126,0.08);
+  padding: 3px 10px; border-radius: 100px; margin-top: 10px;
+}
+
+/* ══════════════════════════════════════════
+   ── LOG PAGE ──
+══════════════════════════════════════════ */
+.day-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; margin-bottom: 20px;
+}
+
+.day-sel-btn {
+  position: relative; overflow: hidden;
+  background: var(--glass); border: 1.5px solid var(--border);
+  border-radius: var(--r); padding: 16px 14px;
+  text-align: left; cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.22,1,0.36,1);
+  min-height: 72px;
+}
+
+.day-sel-btn::before {
+  content: ''; position: absolute; inset: 0;
+  opacity: 0; transition: opacity 0.2s;
+}
+.day-sel-btn.c-push::before { background: radial-gradient(circle at top right, rgba(255,77,28,0.15), transparent 70%); }
+.day-sel-btn.c-pull::before { background: radial-gradient(circle at top right, rgba(28,122,255,0.15), transparent 70%); }
+.day-sel-btn.c-legs::before { background: radial-gradient(circle at top right, rgba(0,217,126,0.15), transparent 70%); }
+
+.day-sel-btn.active::before { opacity: 1; }
+.day-sel-btn.active.c-push { border-color: rgba(255,77,28,0.5); }
+.day-sel-btn.active.c-pull { border-color: rgba(28,122,255,0.5); }
+.day-sel-btn.active.c-legs { border-color: rgba(0,217,126,0.5); }
+
+.day-sel-type {
+  font-family: 'Space Mono', monospace; font-size: 9px;
+  letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.day-sel-name { font-size: 13px; font-weight: 700; }
+.day-sel-sub { font-size: 10px; color: var(--ink2); margin-top: 2px; }
+
+.day-sel-check {
+  position: absolute; top: 10px; right: 10px;
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 900;
+  opacity: 0; transform: scale(0);
+  transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  color: white;
+}
+.day-sel-btn.active .day-sel-check { opacity: 1; transform: scale(1); }
+.day-sel-btn.active.c-push .day-sel-check { background: var(--push); }
+.day-sel-btn.active.c-pull .day-sel-check { background: var(--pull); }
+.day-sel-btn.active.c-legs .day-sel-check { background: var(--legs); }
+
+/* Exercise log cards */
+.ex-log-wrap {
+  margin-bottom: 12px; border-radius: var(--r); overflow: hidden;
+  border: 1.5px solid var(--border);
+  background: var(--glass);
+  animation: cardIn 0.4s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+.ex-log-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; cursor: pointer;
+  position: relative; overflow: hidden;
+}
+
+.ex-log-head::after {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+}
+
+.ex-log-wrap.c-push .ex-log-head::after { background: var(--push); }
+.ex-log-wrap.c-pull .ex-log-head::after { background: var(--pull); }
+.ex-log-wrap.c-legs .ex-log-head::after { background: var(--legs); }
+
+.ex-log-num {
+  font-family: 'Space Mono', monospace; font-size: 11px;
+  color: var(--ink3); width: 22px; flex-shrink: 0; text-align: center;
+}
+
+.ex-log-info { flex: 1; }
+.ex-log-name { font-size: 14px; font-weight: 700; }
+.ex-log-meta { font-size: 10px; color: var(--ink2); font-family: 'Space Mono', monospace; margin-top: 2px; }
+
+.ex-progress-bar {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: var(--border);
+}
+.ex-progress-fill {
+  height: 100%; background: var(--legs); border-radius: 0 1px 1px 0;
+  transition: width 0.4s ease;
+}
+
+.ex-log-body {
+  display: none; padding: 12px 14px 16px;
+  border-top: 1px solid var(--border);
+}
+.ex-log-wrap.open .ex-log-body { display: block; }
+
+.set-col-labels {
+  display: grid; grid-template-columns: 32px 1fr 1fr 40px;
+  gap: 8px; margin-bottom: 8px; padding: 0 2px;
+  font-size: 9px; font-family: 'Space Mono', monospace;
+  color: var(--ink3); text-align: center; letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.set-row {
+  display: grid; grid-template-columns: 32px 1fr 1fr 40px;
+  gap: 8px; margin-bottom: 10px; align-items: center;
+}
+.set-row:last-of-type { margin-bottom: 0; }
+
+.set-label {
+  font-family: 'Space Mono', monospace; font-size: 11px;
+  color: var(--ink3); text-align: center; font-weight: 700;
+}
+
+/* STEPPER — the hero mobile component */
+.stepper {
+  display: flex; align-items: stretch;
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid var(--border);
+  border-radius: 12px; overflow: hidden; height: 52px;
+  transition: border-color 0.2s;
+}
+.stepper:focus-within { border-color: var(--border2); }
+
+.step-btn {
+  width: 44px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 300; color: var(--ink2);
+  transition: background 0.1s, color 0.1s;
+  user-select: none;
+}
+.step-btn:active { background: rgba(255,255,255,0.08); color: var(--ink); }
+
+.step-val {
+  flex: 1; text-align: center;
+  font-family: 'Space Mono', monospace; font-size: 17px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1);
+}
+.step-val.bump { animation: valBump 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes valBump {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+/* Check button */
+.check-btn {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1.5px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  font-size: 16px; color: var(--ink3);
+  transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  flex-shrink: 0; align-self: center;
+}
+.check-btn:active { transform: scale(0.88); }
+.check-btn.done {
+  background: var(--legs); border-color: var(--legs);
+  color: white; transform: scale(1.05);
+  box-shadow: 0 0 12px rgba(0,217,126,0.4);
+}
+
+/* Save button */
+.save-btn-wrap {
+  position: sticky; bottom: calc(84px + env(safe-area-inset-bottom));
+  padding: 12px 0; z-index: 10;
+}
+
+.save-btn {
+  width: 100%; height: 58px; border-radius: 16px;
+  background: linear-gradient(135deg, var(--push), #ff7a20);
+  color: white; font-size: 16px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 4px 24px rgba(255,77,28,0.35);
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.3px;
+}
+.save-btn:active { transform: scale(0.97); box-shadow: 0 2px 12px rgba(255,77,28,0.2); }
+.save-btn:disabled { background: var(--glass2); color: var(--ink3); box-shadow: none; }
+
+.save-icon { font-size: 20px; }
+
+/* ══════════════════════════════════════════
+   ── HISTORY PAGE ──
+══════════════════════════════════════════ */
+.hist-empty {
+  text-align: center; padding: 60px 16px;
+}
+.hist-empty-icon { font-size: 56px; margin-bottom: 16px; }
+.hist-empty-text {
+  font-size: 14px; color: var(--ink2); line-height: 1.7;
+  font-family: 'Space Mono', monospace;
+}
+
+.hist-card {
+  margin-bottom: 10px; border-radius: var(--r); overflow: hidden;
+  border: 1px solid var(--border); background: var(--glass);
+  animation: cardIn 0.4s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+.hist-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px; cursor: pointer;
+}
+
+.hist-stripe {
+  width: 4px; height: 40px; border-radius: 2px; flex-shrink: 0;
+}
+
+.hist-info { flex: 1; }
+.hist-date { font-size: 14px; font-weight: 700; }
+.hist-meta { font-size: 11px; color: var(--ink2); font-family: 'Space Mono', monospace; margin-top: 2px; }
+
+.hist-type {
+  font-family: 'Space Mono', monospace; font-size: 9px;
+  font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  padding: 5px 11px; border-radius: 100px;
+}
+
+.hist-body {
+  display: none; padding: 0 16px 16px;
+  border-top: 1px solid var(--border);
+}
+.hist-card.open .hist-body { display: block; }
+
+.hist-ex { margin-top: 14px; }
+.hist-ex-name { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+.hist-sets { display: flex; flex-wrap: wrap; gap: 6px; }
+.hist-pill {
+  font-family: 'Space Mono', monospace; font-size: 11px;
+  padding: 5px 11px; border-radius: 8px;
+  background: var(--glass2); border: 1px solid var(--border);
+  color: var(--ink2);
+}
+
+.hist-del {
+  width: 100%; margin-top: 16px; padding: 12px;
+  border-radius: 10px; font-size: 12px; font-weight: 700;
+  color: var(--red); border: 1px solid rgba(255,59,59,0.2);
+  background: rgba(255,59,59,0.05);
+  min-height: 44px; letter-spacing: 0.5px;
+  transition: background 0.2s;
+}
+.hist-del:active { background: rgba(255,59,59,0.12); }
+
+.mini-action {
+  min-height: 40px; padding: 0 14px; border-radius: 100px;
+  border: 1px solid var(--border2); background: var(--glass2);
+  font-size: 11px; font-weight: 700; color: var(--ink2);
+  letter-spacing: 0.8px; text-transform: uppercase;
+}
+.mini-action:active { transform: scale(0.96); color: var(--ink); }
+
+/* ══════════════════════════════════════════
+   ── ASSESS PAGE ──
+══════════════════════════════════════════ */
+.stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; margin-bottom: 16px;
+}
+
+.stat-tile {
+  background: var(--glass); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 18px 16px;
+  position: relative; overflow: hidden;
+}
+
+.stat-tile::before {
+  content: '';
+  position: absolute; top: -20px; right: -20px;
+  width: 80px; height: 80px; border-radius: 50%;
+  opacity: 0.07;
+}
+.stat-tile.t-sessions::before { background: var(--push); }
+.stat-tile.t-sets::before { background: var(--pull); }
+.stat-tile.t-days::before { background: var(--legs); }
+.stat-tile.t-streak::before { background: var(--gold); }
+
+.stat-val {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 34px; font-weight: 700; line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-label {
+  font-size: 10px; color: var(--ink2);
+  font-family: 'Space Mono', monospace; letter-spacing: 1px; text-transform: uppercase;
+}
+
+.t-sessions .stat-val { color: var(--push2); }
+.t-sets .stat-val { color: var(--pull2); }
+.t-days .stat-val { color: var(--legs2); }
+.t-streak .stat-val { color: var(--gold); }
+
+.assess-section {
+  background: var(--glass); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 18px; margin-bottom: 12px;
+}
+
+.assess-section h3 {
+  font-size: 13px; font-weight: 700; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.3px;
+}
+
+.strength-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.strength-name {
+  font-size: 11px; font-weight: 600; color: var(--ink2);
+  min-width: 110px; line-height: 1.3;
+}
+.strength-track {
+  flex: 1; height: 6px; background: rgba(255,255,255,0.06);
+  border-radius: 3px; overflow: hidden;
+}
+.strength-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--legs), var(--legs2));
+  transition: width 0.7s cubic-bezier(0.22,1,0.36,1);
+}
+.strength-diff {
+  font-family: 'Space Mono', monospace; font-size: 10px;
+  min-width: 40px; text-align: right;
+}
+
+/* AI Output */
+.ai-section {
+  background: var(--glass); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 18px; margin-bottom: 12px;
+}
+
+.run-assess-btn {
+  width: 100%; height: 56px; border-radius: 14px;
+  background: var(--glass2); border: 1.5px solid var(--border2);
+  font-size: 14px; font-weight: 700; color: var(--ink);
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: all 0.2s; letter-spacing: 0.3px;
+}
+.run-assess-btn:active { transform: scale(0.98); }
+.run-assess-btn.running {
+  background: rgba(255,77,28,0.08);
+  border-color: rgba(255,77,28,0.3);
+  color: var(--push2);
+}
+
+.ai-output {
+  margin-top: 14px;
+  background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px;
+  font-family: 'Space Mono', monospace; font-size: 12px;
+  line-height: 1.9; color: var(--ink2);
+  white-space: pre-wrap;
+}
+
+/* Typing cursor */
+.cursor {
+  display: inline-block; width: 9px; height: 15px;
+  background: var(--push); margin-left: 2px;
+  vertical-align: middle; border-radius: 1px;
+  animation: blink 0.9s step-end infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+.toast-wrap {
+  position: fixed; bottom: calc(92px + env(safe-area-inset-bottom));
+  left: 50%; transform: translateX(-50%);
+  z-index: 500; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+
+.toast {
+  background: rgba(20,20,20,0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 100px; padding: 11px 20px;
+  font-size: 13px; font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  transform: translateY(10px) scale(0.95);
+  opacity: 0; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  border: 1px solid var(--border2);
+}
+.toast.show { opacity: 1; transform: translateY(0) scale(1); }
+.toast.ok  { border-color: rgba(0,217,126,0.4); color: var(--legs2); }
+.toast.err { border-color: rgba(255,59,59,0.4); color: #ff6b6b; }
+
+/* ══════════════════════════════════════════
+   SPINNER
+══════════════════════════════════════════ */
+.spin {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════════════
+   STAGGER ANIMATIONS
+══════════════════════════════════════════ */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.10s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.20s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.30s; }
+
+/* ══════════════════════════════════════════
+   MISC UTILS
+══════════════════════════════════════════ */
+.divider {
+  height: 1px; background: var(--border);
+  margin: 14px 0;
+}
+
+.section-label {
+  font-family: 'Space Mono', monospace; font-size: 9px;
+  letter-spacing: 3px; text-transform: uppercase; color: var(--ink3);
+  margin-bottom: 10px;
+}
+
+/* Desktop tweaks */
+@media (min-width: 600px) {
+  .page { padding: 0 24px 32px; }
+  .bottom-nav { justify-content: center; }
+  .nav-btn { padding: 8px 28px; }
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">ROHIT.FIT</div>
+  <div class="splash-bar"><div class="splash-fill"></div></div>
+  <div class="splash-text">Loading your plan</div>
+</div>
+
+<!-- BG ORBS -->
+<div class="orb-field">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<!-- ═══════════ PLAN PAGE ═══════════ -->
+<div id="page-plan" class="page active">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Your <span>Plan</span></div>
+      <div class="page-sub">// DB + EZ BAR · NO SMITH MACHINE</div>
+    </div>
+  </div>
+  <div class="day-scroll" id="plan-chips"></div>
+  <div id="plan-content"></div>
+</div>
+
+<!-- ═══════════ LOG PAGE ═══════════ -->
+<div id="page-log" class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Log <span>Session</span></div>
+      <div class="page-sub" id="log-date"></div>
+    </div>
+  </div>
+  <div class="section-label">Select Day</div>
+  <div class="day-grid" id="day-grid"></div>
+  <div id="log-form"></div>
+</div>
+
+<!-- ═══════════ HISTORY PAGE ═══════════ -->
+<div id="page-history" class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">History</div>
+      <div class="page-sub" id="hist-sub">// LOADING...</div>
+    </div>
+    <button class="mini-action" onclick="exportSessions()">Export</button>
+  </div>
+  <div id="hist-list"></div>
+</div>
+
+<!-- ═══════════ ASSESS PAGE ═══════════ -->
+<div id="page-assess" class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Assess</div>
+      <div class="page-sub">// AI COACH · MONTHLY REVIEW</div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-tile t-sessions">
+      <div class="stat-val" id="s-sessions">—</div>
+      <div class="stat-label">Sessions</div>
+    </div>
+    <div class="stat-tile t-sets">
+      <div class="stat-val" id="s-sets">—</div>
+      <div class="stat-label">Total Sets</div>
+    </div>
+    <div class="stat-tile t-days">
+      <div class="stat-val" id="s-days">—</div>
+      <div class="stat-label">Days Active</div>
+    </div>
+    <div class="stat-tile t-streak">
+      <div class="stat-val" id="s-streak">—</div>
+      <div class="stat-label">🔥 Streak</div>
+    </div>
+  </div>
+
+  <div class="assess-section" id="strength-section" style="display:none">
+    <h3>💪 Strength Progress</h3>
+    <div id="strength-bars"></div>
+  </div>
+
+  <div class="ai-section">
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:6px;">🤖 AI Coach</h3>
+    <p style="font-size:11px;color:var(--ink2);font-family:'Space Mono',monospace;line-height:1.7;margin-bottom:14px">Log 3+ sessions then hit the button for a personalized progress breakdown — what's working, what's not, what to fix.</p>
+    <button class="run-assess-btn" id="run-btn" onclick="runAssessment()">
+      <span>Run Assessment</span>
+      <span style="font-size:18px">→</span>
+    </button>
+    <div class="ai-output" id="ai-out" style="display:none"></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <div class="nav-pill">
+    <button class="nav-btn active" id="nb-plan" onclick="goPage('plan',this)">
+      <div class="nav-icon">📋</div>Plan
+    </button>
+    <button class="nav-btn" id="nb-log" onclick="goPage('log',this)">
+      <div class="nav-icon">✏️</div>Log
+    </button>
+    <button class="nav-btn" id="nb-history" onclick="goPage('history',this)">
+      <div class="nav-icon">📅</div>History
+    </button>
+    <button class="nav-btn" id="nb-assess" onclick="goPage('assess',this)">
+      <div class="nav-icon">📊</div>Assess
+    </button>
+  </div>
+</nav>
+
+<!-- TOAST -->
+<div class="toast-wrap">
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════ */
+const API_BASE = window.ENV_API_BASE || "https://rohitfit-func.azurewebsites.net/api";
+const API_KEY  = window.ENV_API_KEY  || "";
+
+/* ═══════════════════════════════════════════
+   WORKOUT DATA
+═══════════════════════════════════════════ */
+const PLANS = {
+  push1: {
+    name:"Push Day 1", sub:"Chest Focus", type:"PUSH", c:"push",
+    exercises:[
+      {name:"DB Flat Bench Press",      target:"4×8",      w:40,   unit:"lb each",  sets:4, tip:"Full ROM · pause at bottom"},
+      {name:"DB Incline Press",          target:"3×10",     w:35,   unit:"lb each",  sets:3, tip:"30–45° · upper chest"},
+      {name:"DB Shoulder Press",         target:"4×8",      w:25,   unit:"lb each",  sets:4, tip:"Seated · full press overhead"},
+      {name:"Lateral Raises",            target:"4×12",     w:20,   unit:"lb each",  sets:4, tip:"Slow negative · 3 sec down"},
+      {name:"DB Tricep Kickback",        target:"3×12",     w:20,   unit:"lb each",  sets:3, tip:"Elbow high · full extension"},
+      {name:"Overhead Tricep Extension", target:"3×12",     w:35,   unit:"lb",       sets:3, tip:"Both hands · full stretch"},
+    ]
+  },
+  pull1: {
+    name:"Pull Day 1", sub:"Back Focus", type:"PULL", c:"pull",
+    exercises:[
+      {name:"Weighted Pull-ups",         target:"4×6",      w:15,   unit:"lb added", sets:4, tip:"Dead hang · full ROM"},
+      {name:"DB Row (one arm)",          target:"4×8",      w:50,   unit:"lb each",  sets:4, tip:"Elbow drives up · brace on bench"},
+      {name:"DB Chest-Supported Row",    target:"3×10",     w:30,   unit:"lb each",  sets:3, tip:"Prone on incline · squeeze top"},
+      {name:"EZ Bar Curl",               target:"4×10",     w:50,   unit:"lb total", sets:4, tip:"Control negative · no swing"},
+      {name:"DB Hammer Curl",            target:"3×12",     w:25,   unit:"lb each",  sets:3, tip:"Neutral grip · brachialis"},
+      {name:"DB Rear Delt Fly",          target:"3×15",     w:15,   unit:"lb each",  sets:3, tip:"Bent over · elbows slightly bent"},
+    ]
+  },
+  legs: {
+    name:"Legs", sub:"Quad + Ham Balance", type:"LEGS", c:"legs",
+    exercises:[
+      {name:"DB Goblet Squat",           target:"4×8",      w:60,   unit:"lb",       sets:4, tip:"Hold at chest · full depth"},
+      {name:"DB Romanian Deadlift",      target:"4×10",     w:40,   unit:"lb each",  sets:4, tip:"⚠️ Hamstring fix · hinge at hips"},
+      {name:"DB Walking Lunges",         target:"3×12/leg", w:25,   unit:"lb each",  sets:3, tip:"Step far · knee behind toes"},
+      {name:"DB Sumo Squat",             target:"3×12",     w:60,   unit:"lb",       sets:3, tip:"Wide stance · inner quad"},
+      {name:"Single-leg DB Curl",        target:"4×12",     w:20,   unit:"lb each",  sets:4, tip:"⚠️ Hamstring fix · slow neg"},
+      {name:"Standing Calf Raises",      target:"4×15",     w:40,   unit:"lb each",  sets:4, tip:"Hold DBs · full ROM · slow"},
+    ]
+  },
+  push2: {
+    name:"Push Day 2", sub:"Shoulder Focus", type:"PUSH", c:"push",
+    exercises:[
+      {name:"DB Arnold Press",           target:"4×8",      w:25,   unit:"lb each",  sets:4, tip:"All 3 deltoid heads"},
+      {name:"DB Incline Press",          target:"4×8",      w:37.5, unit:"lb each",  sets:4, tip:"Upper chest emphasis"},
+      {name:"DB Front Raise",            target:"3×12",     w:20,   unit:"lb each",  sets:3, tip:"Alternate arms · controlled"},
+      {name:"DB Lateral Raise (lean)",   target:"4×15",     w:15,   unit:"lb each",  sets:4, tip:"Cable-like tension"},
+      {name:"EZ Bar Skullcrusher",       target:"3×10",     w:45,   unit:"lb total", sets:3, tip:"Lower to forehead · elbows in"},
+      {name:"DB Chest Squeeze Press",    target:"3×12",     w:30,   unit:"lb each",  sets:3, tip:"Press DBs together · inner chest"},
+    ]
+  },
+  pull2: {
+    name:"Pull Day 2", sub:"Bicep Focus", type:"PULL", c:"pull",
+    exercises:[
+      {name:"DB Renegade Row",           target:"4×8/side", w:30,   unit:"lb each",  sets:4, tip:"Plank · alternating · core tight"},
+      {name:"Weighted Pull-ups",         target:"4×6",      w:15,   unit:"lb added", sets:4, tip:"Control descent · dead hang"},
+      {name:"EZ Bar Reverse Curl",       target:"3×12",     w:35,   unit:"lb total", sets:3, tip:"Overhand · brachioradialis"},
+      {name:"EZ Bar Curl",               target:"4×10",     w:55,   unit:"lb total", sets:4, tip:"Supinate top · 3 sec negative"},
+      {name:"DB Concentration Curl",     target:"3×12",     w:25,   unit:"lb each",  sets:3, tip:"Peak contraction · slow"},
+      {name:"DB Pullover",               target:"3×12",     w:35,   unit:"lb",       sets:3, tip:"Hold one DB · arc overhead"},
+    ]
+  }
+};
+
+const PKEYS = Object.keys(PLANS);
+const COLOR = { push:"var(--push)", pull:"var(--pull)", legs:"var(--legs)" };
+const GLOW  = { push:"var(--glow-push)", pull:"var(--glow-pull)", legs:"var(--glow-legs)" };
+
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let activePlanKey = "push1";
+let selectedDay   = null;
+let setData       = {};   // {dayKey: {exIdx: {setIdx: {w, r, done}}}}
+let sessions      = [];
+let statsData     = null;
+
+/* ═══════════════════════════════════════════
+   API
+═══════════════════════════════════════════ */
+const H = { "X-API-Key": API_KEY };
+async function apiGet(p)       { const r = await fetch(API_BASE+p,{headers:H}); if(!r.ok) throw Error(r.status); return r.json(); }
+async function apiPost(p,b)    { const r = await fetch(API_BASE+p,{method:"POST",headers:{...H,"Content-Type":"application/json"},body:JSON.stringify(b)}); if(!r.ok) throw Error(r.status); return r.json(); }
+async function apiDelete(p)    { const r = await fetch(API_BASE+p,{method:"DELETE",headers:H}); if(!r.ok) throw Error(r.status); return r.json(); }
+
+/* ═══════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════ */
+function goPage(page, btn) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("page-"+page).classList.add("active");
+  btn.classList.add("active");
+  if (page === "log")     initLogPage();
+  if (page === "history") loadHistory();
+  if (page === "assess")  loadStats();
+}
+
+/* ═══════════════════════════════════════════
+   PLAN PAGE
+═══════════════════════════════════════════ */
+function renderPlan() {
+  const chips = document.getElementById("plan-chips");
+  chips.innerHTML = PKEYS.map((k,i) => {
+    const p = PLANS[k];
+    return `<button class="day-chip c-${p.c} stagger-${i+1} ${k===activePlanKey?"active":""}"
+      onclick="switchPlanDay('${k}')" style="animation-delay:${i*0.07}s">
+      <span class="chip-dot"></span>${p.name}
+    </button>`;
+  }).join("");
+  renderPlanContent(activePlanKey);
+}
+
+function switchPlanDay(key) {
+  activePlanKey = key;
+  document.querySelectorAll(".day-chip").forEach((el,i) => {
+    el.classList.toggle("active", PKEYS[i] === key);
+  });
+  renderPlanContent(key);
+}
+
+function renderPlanContent(key) {
+  const plan = PLANS[key];
+  const col  = COLOR[plan.c];
+  const targs = { push1:"→ 45 lb @ wk4", pull1:"→ +25 lb @ wk5", legs:"→ 70 lb @ wk4", push2:"→ 30 lb @ wk4", pull2:"→ 35 lb @ wk5" };
+  const weekTarget = targs[key] || "→ Progressive";
+
+  document.getElementById("plan-content").innerHTML = plan.exercises.map((ex, i) => `
+    <div class="plan-ex-card stagger-${Math.min(i+1,6)}" style="animation-delay:${i*0.06}s">
+      <div class="plan-ex-head" onclick="this.parentElement.classList.toggle('open')">
+        <div class="plan-ex-num">0${i+1}</div>
+        <div class="plan-ex-info">
+          <div class="plan-ex-name">${ex.name}</div>
+          <div class="plan-ex-sub">${ex.tip}</div>
+        </div>
+        <div class="plan-ex-badge" style="background:${col}18;color:${col};">${ex.target}</div>
+      </div>
+      <div class="plan-ex-body">
+        <div class="plan-detail-row">
+          <span class="plan-detail-label">Start Weight</span>
+          <span class="plan-detail-val">${ex.w} ${ex.unit}</span>
+        </div>
+        <div class="plan-detail-row">
+          <span class="plan-detail-label">Sets × Reps</span>
+          <span class="plan-detail-val">${ex.target}</span>
+        </div>
+        <div class="plan-detail-row">
+          <span class="plan-detail-label">Rest</span>
+          <span class="plan-detail-val" style="color:var(--gold)">${i < 3 ? "2–3 min" : "90 sec"}</span>
+        </div>
+        <div class="progress-target">⬆ ${weekTarget}</div>
+      </div>
+    </div>`).join("");
+}
+
+/* ═══════════════════════════════════════════
+   LOG PAGE
+═══════════════════════════════════════════ */
+function initLogPage() {
+  const now = new Date();
+  document.getElementById("log-date").textContent =
+    "// " + now.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"}).toUpperCase();
+  renderDayGrid();
+}
+
+function renderDayGrid() {
+  document.getElementById("day-grid").innerHTML = PKEYS.map(k => {
+    const p = PLANS[k];
+    const sel = selectedDay === k;
+    return `<button class="day-sel-btn c-${p.c} ${sel?"active":""}" onclick="selectDay('${k}')">
+      <div class="day-sel-check">✓</div>
+      <div class="day-sel-type" style="color:${COLOR[p.c]}">${p.type}</div>
+      <div class="day-sel-name">${p.name}</div>
+      <div class="day-sel-sub">${p.sub}</div>
+    </button>`;
+  }).join("");
+}
+
+function selectDay(key) {
+  selectedDay = key;
+  renderDayGrid();
+  buildLogForm(key);
+}
+
+function ensureSetData(key) {
+  if (!setData[key]) setData[key] = {};
+  PLANS[key].exercises.forEach((ex, ei) => {
+    if (!setData[key][ei]) setData[key][ei] = {};
+    for (let si = 0; si < ex.sets; si++) {
+      if (!setData[key][ei][si]) setData[key][ei][si] = { w: ex.w, r: 0, done: false };
+    }
+  });
+}
+
+function buildLogForm(key) {
+  ensureSetData(key);
+  const plan = PLANS[key];
+  const col  = COLOR[plan.c];
+
+  const html = plan.exercises.map((ex, ei) => {
+    const completedSets = Object.values(setData[key][ei] || {}).filter(s => s.done).length;
+    const pct = Math.round((completedSets / ex.sets) * 100);
+
+    const rows = Array.from({length: ex.sets}, (_, si) => {
+      const d = setData[key][ei][si];
+      return `<div class="set-row" id="sr-${ei}-${si}">
+        <div class="set-label">S${si+1}</div>
+        <div class="stepper" id="sw-${ei}-${si}">
+          <button class="step-btn" ontouchstart="startStep(${ei},${si},'w',-2.5)" onclick="doStep(${ei},${si},'w',-2.5)">−</button>
+          <div class="step-val" id="wv-${ei}-${si}">${d.w}</div>
+          <button class="step-btn" ontouchstart="startStep(${ei},${si},'w',2.5)" onclick="doStep(${ei},${si},'w',2.5)">+</button>
+        </div>
+        <div class="stepper" id="sr2-${ei}-${si}">
+          <button class="step-btn" ontouchstart="startStep(${ei},${si},'r',-1)" onclick="doStep(${ei},${si},'r',-1)">−</button>
+          <div class="step-val" id="rv-${ei}-${si}">${d.r}</div>
+          <button class="step-btn" ontouchstart="startStep(${ei},${si},'r',1)" onclick="doStep(${ei},${si},'r',1)">+</button>
+        </div>
+        <button class="check-btn ${d.done?"done":""}" id="cb-${ei}-${si}"
+          onclick="toggleDone(${ei},${si})" aria-label="Mark set done">✓</button>
+      </div>`;
+    }).join("");
+
+    return `<div class="ex-log-wrap c-${plan.c} ${ei===0?"open":""} stagger-${Math.min(ei+1,6)}"
+        id="elw-${ei}" style="animation-delay:${ei*0.07}s">
+      <div class="ex-log-head" onclick="toggleExCard(${ei})">
+        <div class="ex-log-num">0${ei+1}</div>
+        <div class="ex-log-info">
+          <div class="ex-log-name">${ex.name}</div>
+          <div class="ex-log-meta">${ex.target} · ${ex.w} ${ex.unit}</div>
+        </div>
+        <div style="font-size:18px;color:var(--ink3);margin-left:8px">›</div>
+        <div class="ex-progress-bar">
+          <div class="ex-progress-fill" id="epf-${ei}" style="width:${pct}%"></div>
+        </div>
+      </div>
+      <div class="ex-log-body">
+        <div class="set-col-labels">
+          <div></div><div>LB</div><div>REPS</div><div></div>
+        </div>
+        ${rows}
+      </div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("log-form").innerHTML = html + `
+    <div class="save-btn-wrap">
+      <button class="save-btn" onclick="saveSession()">
+        <span class="save-icon">💾</span>
+        <span>Save Session</span>
+      </button>
+    </div>`;
+}
+
+function toggleExCard(ei) {
+  document.getElementById("elw-"+ei).classList.toggle("open");
+}
+
+/* Stepper logic */
+let holdTimer = null;
+let holdInterval = null;
+
+function startStep(ei, si, field, delta) {
+  clearHold();
+  holdTimer = setTimeout(() => {
+    holdInterval = setInterval(() => doStep(ei, si, field, delta), 120);
+  }, 400);
+}
+
+function clearHold() {
+  clearTimeout(holdTimer);
+  clearInterval(holdInterval);
+}
+
+document.addEventListener("touchend", clearHold);
+document.addEventListener("mouseup", clearHold);
+
+function doStep(ei, si, field, delta) {
+  if (!selectedDay) return;
+  const key = selectedDay;
+  const d = setData[key]?.[ei]?.[si];
+  if (!d) return;
+
+  if (field === 'w') {
+    d.w = Math.max(0, +((d.w || 0) + delta).toFixed(1));
+    const el = document.getElementById(`wv-${ei}-${si}`);
+    if (el) { el.textContent = d.w; el.classList.add("bump"); setTimeout(() => el.classList.remove("bump"), 200); }
+  } else {
+    d.r = Math.max(0, (d.r || 0) + delta);
+    const el = document.getElementById(`rv-${ei}-${si}`);
+    if (el) { el.textContent = d.r; el.classList.add("bump"); setTimeout(() => el.classList.remove("bump"), 200); }
+  }
+  haptic();
+}
+
+function toggleDone(ei, si) {
+  if (!selectedDay) return;
+  const key = selectedDay;
+  const d = setData[key]?.[ei]?.[si];
+  if (!d) return;
+  d.done = !d.done;
+  const cb = document.getElementById(`cb-${ei}-${si}`);
+  if (cb) cb.classList.toggle("done", d.done);
+
+  // Update progress bar
+  const plan = PLANS[key];
+  const ex = plan.exercises[ei];
+  const completedSets = Object.values(setData[key][ei] || {}).filter(s => s.done).length;
+  const pct = Math.round((completedSets / ex.sets) * 100);
+  const pfEl = document.getElementById(`epf-${ei}`);
+  if (pfEl) pfEl.style.width = pct + "%";
+
+  // Auto-open next exercise when all sets done
+  if (d.done && completedSets === ex.sets && ei + 1 < plan.exercises.length) {
+    setTimeout(() => {
+      document.getElementById("elw-" + (ei + 1))?.classList.add("open");
+    }, 300);
+  }
+  haptic();
+}
+
+async function saveSession() {
+  if (!selectedDay) { toast("Pick a workout day first", "err"); return; }
+  const key  = selectedDay;
+  const plan = PLANS[key];
+
+  const exercises = plan.exercises.map((ex, ei) => ({
+    name: ex.name,
+    sets: Object.values(setData[key]?.[ei] || {})
+      .filter(s => s.done && s.r > 0)
+      .map(s => ({ weight: s.w, reps: s.r }))
+  })).filter(ex => ex.sets.length > 0);
+
+  if (!exercises.length) { toast("Complete at least one set with reps", "err"); return; }
+
+  const btn = document.querySelector(".save-btn");
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spin"></div><span>Saving...</span>`;
+
+  try {
+    await apiPost("/sessions", {
+      dayKey: key, dayName: plan.name, dayType: plan.type,
+      date: new Date().toISOString(), exercises
+    });
+    toast("Session saved 💪", "ok");
+    setData[key] = {};
+    selectedDay  = null;
+    renderDayGrid();
+    document.getElementById("log-form").innerHTML = "";
+  } catch (e) {
+    toast("Save failed — check connection", "err");
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span class="save-icon">💾</span><span>Save Session</span>`;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   HISTORY PAGE
+═══════════════════════════════════════════ */
+async function loadHistory() {
+  const list = document.getElementById("hist-list");
+  const sub  = document.getElementById("hist-sub");
+  list.innerHTML = `<div class="hist-empty"><div class="hist-empty-icon">⏳</div><div class="hist-empty-text">LOADING...</div></div>`;
+
+  try {
+    sessions = await apiGet("/sessions");
+    sub.textContent = `// ${sessions.length} SESSION${sessions.length !== 1 ? "S" : ""} LOGGED`;
+
+    if (!sessions.length) {
+      list.innerHTML = `<div class="hist-empty">
+        <div class="hist-empty-icon">📓</div>
+        <div class="hist-empty-text">NO SESSIONS YET\nHead to Log to start.</div>
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = sessions.map((s, i) => {
+      const date = new Date(s.date);
+      const ds   = date.toLocaleDateString("en-US", {weekday:"short",month:"short",day:"numeric"});
+      const tc   = COLOR[s.dayType?.toLowerCase()] || "var(--ink3)";
+      const sets = s.exercises?.reduce((a, e) => a + e.sets.length, 0) || 0;
+      const dayName = escapeHtml(s.dayName || "Workout");
+      const dayType = escapeHtml(s.dayType || "");
+      const sessionId = escapeJsString(s.id);
+
+      const exHtml = (s.exercises || []).map(ex => `
+        <div class="hist-ex">
+          <div class="hist-ex-name">${escapeHtml(ex.name || "Exercise")}</div>
+          <div class="hist-sets">${ex.sets.map(st =>
+            `<span class="hist-pill">${escapeHtml(st.weight)}lb×${escapeHtml(st.reps)}</span>`
+          ).join("")}</div>
+        </div>`).join("");
+
+      return `<div class="hist-card stagger-${Math.min(i+1,6)}" id="hc-${i}" style="animation-delay:${i*0.06}s">
+        <div class="hist-head" onclick="document.getElementById('hc-${i}').classList.toggle('open')">
+          <div class="hist-stripe" style="background:${tc}"></div>
+          <div class="hist-info">
+            <div class="hist-date">${escapeHtml(ds)} — ${dayName}</div>
+            <div class="hist-meta">${sets} SETS · ${s.exercises?.length || 0} EXERCISES</div>
+          </div>
+          <div class="hist-type" style="background:${tc}18;color:${tc}">${dayType}</div>
+        </div>
+        <div class="hist-body">
+          ${exHtml}
+          <button class="hist-del" onclick="deleteSession('${sessionId}',${i},event)">🗑 Delete Session</button>
+        </div>
+      </div>`;
+    }).join("");
+  } catch (e) {
+    sub.textContent = "// ERROR";
+    list.innerHTML = `<div class="hist-empty"><div class="hist-empty-icon">⚠️</div><div class="hist-empty-text">COULD NOT LOAD\nCheck your connection.</div></div>`;
+    console.error(e);
+  }
+}
+
+async function deleteSession(id, i, ev) {
+  ev.stopPropagation();
+  if (!confirm("Delete this session?")) return;
+  try {
+    await apiDelete(`/session/${id}`);
+    toast("Deleted", "ok");
+    loadHistory();
+  } catch (e) { toast("Delete failed", "err"); }
+}
+
+async function exportSessions() {
+  try {
+    const data = sessions.length ? sessions : await apiGet("/sessions");
+    if (!data.length) { toast("No sessions to export", "err"); return; }
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `liftr-sessions-${new Date().toISOString().split("T")[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast("Export ready", "ok");
+  } catch (e) {
+    toast("Export failed", "err");
+    console.error(e);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   ASSESS PAGE
+═══════════════════════════════════════════ */
+async function loadStats() {
+  try {
+    statsData = await apiGet("/stats");
+    animateCount("s-sessions", statsData.totalSessions);
+    animateCount("s-sets",     statsData.totalSets);
+    animateCount("s-days",     statsData.uniqueDays);
+    animateCount("s-streak",   statsData.streak);
+
+    if (statsData.strengthProgress?.length) {
+      const sec = document.getElementById("strength-section");
+      sec.style.display = "block";
+      document.getElementById("strength-bars").innerHTML =
+        statsData.strengthProgress.map(ex => {
+          const diff = ex.latestWeight - ex.firstWeight;
+          const pct  = Math.min(100, Math.max(4, Math.round((diff / (ex.firstWeight * 0.5 || 10)) * 100)));
+          const col  = diff > 0 ? "var(--legs2)" : diff < 0 ? "var(--red)" : "var(--ink2)";
+          return `<div class="strength-row">
+            <div class="strength-name">${escapeHtml((ex.name || "").replace("DB ",""))}</div>
+            <div class="strength-track">
+              <div class="strength-fill" style="width:0%" data-target="${pct}%"></div>
+            </div>
+            <div class="strength-diff" style="color:${col}">${diff>0?"+":""}${diff}lb</div>
+          </div>`;
+        }).join("");
+      // Animate bars
+      requestAnimationFrame(() => {
+        document.querySelectorAll(".strength-fill").forEach(el => {
+          el.style.width = el.dataset.target;
+        });
+      });
+    }
+  } catch (e) { console.error(e); }
+}
+
+async function runAssessment() {
+  const btn = document.getElementById("run-btn");
+  const out = document.getElementById("ai-out");
+
+  if (!statsData || statsData.totalSessions < 1) {
+    toast("Log some sessions first", "err"); return;
+  }
+
+  out.style.display = "block";
+  out.textContent = "AI assessment is disabled for V1 until it is proxied through the Azure Function App. Your stats above are live; the coach report needs a backend endpoint so model API keys never ship to the browser.";
+  btn.classList.remove("running");
+}
+
+/* ═══════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════ */
+function animateCount(id, target) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let cur = 0; const step = Math.ceil(target / 20);
+  const t = setInterval(() => {
+    cur = Math.min(cur + step, target);
+    el.textContent = cur;
+    if (cur >= target) clearInterval(t);
+  }, 40);
+}
+
+function toast(msg, type="ok") {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = `toast show ${type}`;
+  setTimeout(() => el.className = "toast", 2800);
+}
+
+function haptic() {
+  if (navigator.vibrate) navigator.vibrate(8);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeJsString(value) {
+  return String(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+setTimeout(() => {
+  document.getElementById("splash").classList.add("gone");
+  renderPlan();
+  initLogPage();
+}, 1500);
+</script>
+</body>
+</html>

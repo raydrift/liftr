@@ -1,0 +1,20 @@
+{
+  "name": "rohitfit-api",
+  "version": "1.0.0",
+  "description": "Workout tracker API — Azure Functions",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "func start",
+    "build": "echo 'No build step needed'",
+    "deploy": "func azure functionapp publish rohitfit-func"
+  },
+  "dependencies": {
+    "@azure/data-tables": "^13.2.2"
+  },
+  "devDependencies": {
+    "azure-functions-core-tools": "^4.x"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
