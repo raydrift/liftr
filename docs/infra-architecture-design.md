@@ -275,7 +275,7 @@ window.ENV_API_KEY
 Current implementation falls back to:
 
 ```text
-https://rohitfit-func.azurewebsites.net/api
+https://liftr-func.azurewebsites.net/api
 ```
 
 Recommended improvement:
@@ -379,4 +379,3 @@ Long-term:
 1. Add authentication and per-user partitioning if the app expands beyond one user.
 2. Add custom domain and HTTPS configuration.
 3. Add backup/export automation for workout data.
-

@@ -5,11 +5,12 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 env:
   TF_IN_AUTOMATION: "true"
+  ARM_USE_OIDC: "true"
   ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
   ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
@@ -50,6 +51,13 @@ jobs:
       - name: Check frontend JavaScript
         run: node scripts/check-frontend.js
 
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -76,11 +84,6 @@ window.LIFTR_CONFIG = {
   API_KEY: "${{ secrets.API_SECRET_KEY }}"
 };
           EOF
-
-      - name: Azure login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy Azure Functions API
         uses: Azure/functions-action@v1

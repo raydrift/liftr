@@ -110,7 +110,7 @@ npm install
 func azure functionapp publish <function-app-name>
 ```
 
-The default package script currently points at `rohitfit-func`; update it if your Function App name differs.
+The default package script points at `liftr-func`.
 
 ## Deploy Frontend
 

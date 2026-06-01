@@ -1,5 +1,5 @@
 {
-  "name": "rohitfit-api",
+  "name": "liftr-api",
   "version": "1.0.0",
   "description": "Workout tracker API — Azure Functions",
   "main": "src/index.js",
@@ -7,7 +7,7 @@
     "start": "func start",
     "build": "node --check src/shared/tableClient.js && node --check src/sessions/index.js && node --check src/sessions/validation.js && node --check src/session/index.js && node --check src/stats/index.js",
     "test": "node --test test/*.test.js",
-    "deploy": "func azure functionapp publish rohitfit-func"
+    "deploy": "func azure functionapp publish liftr-func"
   },
   "dependencies": {
     "@azure/data-tables": "^13.2.2"

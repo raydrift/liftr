@@ -23,13 +23,13 @@ variable "static_web_app_location" {
 variable "app_name" {
   description = "Base name for all resources (keep short, lowercase, no special chars)"
   type        = string
-  default     = "rohitfit"
+  default     = "liftr"
 }
 
 variable "storage_account_name" {
   description = "Storage account name (3-24 chars, lowercase alphanumeric only, globally unique)"
   type        = string
-  # Example: "rohitfitstore" — must be globally unique across all Azure
+  # Example: "liftrstore" — must be globally unique across all Azure
 }
 
 variable "api_secret_key" {

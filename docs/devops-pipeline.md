@@ -58,9 +58,9 @@ Steps:
 
 1. Build and test API.
 2. Check frontend JavaScript.
-3. Terraform init, validate, plan, apply.
-4. Render `frontend/config.js` from Terraform output and GitHub secrets.
-5. Azure login.
+3. Authenticate to Azure with GitHub OIDC.
+4. Terraform init, validate, plan, apply.
+5. Render `frontend/config.js` from Terraform output and GitHub secrets.
 6. Deploy Azure Functions API.
 7. Read Static Web App deployment token from Azure.
 8. Deploy `frontend/` to Azure Static Web Apps.
@@ -80,9 +80,11 @@ STORAGE_ACCOUNT_NAME
 Recommended values for the current Terraform defaults:
 
 ```text
+AZURE_RESOURCE_GROUP=liftr
 AZURE_LOCATION=eastus
 AZURE_STATIC_WEB_APP_LOCATION=eastus2
-APP_NAME=rohitfit
+APP_NAME=liftr
+STORAGE_ACCOUNT_NAME=liftrstore
 ```
 
 `STORAGE_ACCOUNT_NAME` must be globally unique, lowercase, alphanumeric, and 3-24 characters.
@@ -93,29 +95,16 @@ Create these under repository secrets:
 
 ```text
 AZURE_CLIENT_ID
-AZURE_CLIENT_SECRET
 AZURE_SUBSCRIPTION_ID
 AZURE_TENANT_ID
-AZURE_CREDENTIALS
 API_SECRET_KEY
 ```
 
-`AZURE_CREDENTIALS` is the JSON consumed by `azure/login`:
+No Azure client secret is required. The deploy workflow uses GitHub OIDC through `azure/login` and Terraform `ARM_USE_OIDC=true`.
 
-```json
-{
-  "clientId": "<AZURE_CLIENT_ID>",
-  "clientSecret": "<AZURE_CLIENT_SECRET>",
-  "subscriptionId": "<AZURE_SUBSCRIPTION_ID>",
-  "tenantId": "<AZURE_TENANT_ID>"
-}
-```
+## Azure OIDC Service Principal
 
-Terraform uses the individual `AZURE_*` secrets through `ARM_*` environment variables.
-
-## Azure Service Principal
-
-Create a service principal scoped to the existing resource group.
+Create a service principal scoped to the existing `liftr` resource group.
 
 Minimum practical role for V1:
 
@@ -124,6 +113,43 @@ Contributor
 ```
 
 Scope it to the resource group, not the full subscription, unless there is a specific reason.
+
+Create the app registration, service principal, resource-group role assignment, and federated credential:
+
+```bash
+az ad app create --display-name liftr-github-actions
+
+APP_ID=$(az ad app list \
+  --display-name liftr-github-actions \
+  --query "[0].appId" \
+  --output tsv)
+
+az ad sp create --id "$APP_ID"
+
+az role assignment create \
+  --assignee "$APP_ID" \
+  --role Contributor \
+  --scope "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/liftr"
+
+az ad app federated-credential create \
+  --id "$APP_ID" \
+  --parameters '{
+    "name": "github-liftr-production",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "subject": "repo:raydrift/liftr:environment:production",
+    "description": "GitHub Actions production deploy for raydrift/liftr",
+    "audiences": ["api://AzureADTokenExchange"]
+  }'
+```
+
+Use these GitHub secret values:
+
+```text
+AZURE_CLIENT_ID=<APP_ID>
+AZURE_SUBSCRIPTION_ID=<your subscription id>
+AZURE_TENANT_ID=<your tenant id>
+API_SECRET_KEY=<random private API key>
+```
 
 ## Production Environment Gate
 
