@@ -58,6 +58,7 @@ The frontend has no build step.
 
 ```bash
 cd frontend
+cp config.example.js config.js
 python3 -m http.server 4173
 ```
 
@@ -67,7 +68,7 @@ Then open:
 http://127.0.0.1:4173/
 ```
 
-API-backed screens require a reachable Function App and matching API settings.
+API-backed screens require a reachable Function App and matching `config.js` values.
 
 ## Terraform
 
@@ -127,6 +128,7 @@ terraform -chdir=terraform output -raw static_web_app_deployment_token
 
 - Browser-visible API keys are not strong authentication.
 - CORS should be restricted to the Static Web App origin.
+- The deploy workflow renders `frontend/config.js` from GitHub secrets and Terraform output. This makes V1 functional, but the API key remains visible in browser code.
 - Model provider API keys must never be shipped to the browser.
 - AI assessment is disabled in the frontend until a backend proxy endpoint is added.
 - Do not commit `terraform.tfvars`, `*.tfstate`, `.terraform/`, `api/local.settings.json`, or real secrets.
@@ -180,4 +182,13 @@ Manual smoke test:
 - `docs/backend-design.md`
 - `docs/infra-architecture-design.md`
 - `docs/v1-architecture-gap.md`
+- `docs/devops-pipeline.md`
 
+## CI/CD
+
+GitHub Actions workflows live in:
+
+- `.github/workflows/ci.yml`
+- `.github/workflows/deploy.yml`
+
+See `docs/devops-pipeline.md` for required Azure service principal setup, GitHub secrets, GitHub variables, and deployment behavior.

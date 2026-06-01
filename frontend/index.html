@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#080808">
 <title>ROHIT.FIT</title>
+<script src="config.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;600;700;900&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -895,8 +896,8 @@ body::before {
 /* ═══════════════════════════════════════════
    CONFIG
 ═══════════════════════════════════════════ */
-const API_BASE = window.ENV_API_BASE || "https://rohitfit-func.azurewebsites.net/api";
-const API_KEY  = window.ENV_API_KEY  || "";
+const API_BASE = window.LIFTR_CONFIG?.API_BASE || window.ENV_API_BASE || "https://rohitfit-func.azurewebsites.net/api";
+const API_KEY  = window.LIFTR_CONFIG?.API_KEY  || window.ENV_API_KEY  || "";
 
 /* ═══════════════════════════════════════════
    WORKOUT DATA

@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "start": "func start",
-    "build": "echo 'No build step needed'",
+    "build": "node --check src/shared/tableClient.js && node --check src/sessions/index.js && node --check src/sessions/validation.js && node --check src/session/index.js && node --check src/stats/index.js",
+    "test": "node --test test/*.test.js",
     "deploy": "func azure functionapp publish rohitfit-func"
   },
   "dependencies": {

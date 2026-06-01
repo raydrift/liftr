@@ -17,6 +17,7 @@ api/.python_packages/
 .env
 .env.*
 !.env.example
+frontend/config.js
 
 # Terraform
 terraform/.terraform/
