@@ -102,11 +102,16 @@ API_SECRET_KEY
 
 No Azure client secret is required. The deploy workflow uses GitHub OIDC through `azure/login` and Terraform `ARM_USE_OIDC=true`.
 
-## Azure OIDC Service Principal
+## Azure OIDC Identity
 
-Create a service principal scoped to the existing `liftr` resource group.
+The deploy workflow can use either:
 
-Minimum practical role for V1:
+- A user-assigned managed identity with a federated credential.
+- A Microsoft Entra app registration with a service principal and federated credential.
+
+Use the managed identity path if you do not have Entra app-registration access.
+
+Minimum practical role for V1 is:
 
 ```text
 Contributor
@@ -114,7 +119,65 @@ Contributor
 
 Scope it to the resource group, not the full subscription, unless there is a specific reason.
 
-Create the app registration, service principal, resource-group role assignment, and federated credential:
+### Option A: User-Assigned Managed Identity
+
+This path does not require creating an Entra app registration manually.
+
+You still need Azure permission to:
+
+- Create resources in the `liftr` resource group.
+- Create a user-assigned managed identity.
+- Assign RBAC roles, or have an Azure owner assign the role for you.
+
+Create the managed identity and federated credential:
+
+```bash
+az group create --name liftr --location eastus
+
+az identity create \
+  --name liftr-github-actions \
+  --resource-group liftr \
+  --location eastus
+
+IDENTITY_CLIENT_ID=$(az identity show \
+  --name liftr-github-actions \
+  --resource-group liftr \
+  --query clientId \
+  --output tsv)
+
+IDENTITY_PRINCIPAL_ID=$(az identity show \
+  --name liftr-github-actions \
+  --resource-group liftr \
+  --query principalId \
+  --output tsv)
+
+az role assignment create \
+  --assignee-object-id "$IDENTITY_PRINCIPAL_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --role Contributor \
+  --scope "/subscriptions/<AZURE_SUBSCRIPTION_ID>/resourceGroups/liftr"
+
+az identity federated-credential create \
+  --name github-liftr-production \
+  --identity-name liftr-github-actions \
+  --resource-group liftr \
+  --issuer https://token.actions.githubusercontent.com \
+  --subject repo:raydrift/liftr:environment:production \
+  --audiences api://AzureADTokenExchange
+```
+
+Use these GitHub secret values:
+
+```text
+AZURE_CLIENT_ID=<IDENTITY_CLIENT_ID>
+AZURE_SUBSCRIPTION_ID=<your subscription id>
+AZURE_TENANT_ID=<your tenant id>
+API_SECRET_KEY=<random private API key>
+```
+
+### Option B: Entra App Registration
+
+Use this path only if you have permission to create Entra app registrations.
 
 ```bash
 az ad app create --display-name liftr-github-actions
