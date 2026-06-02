@@ -2,7 +2,6 @@
   "name": "liftr-api",
   "version": "1.0.0",
   "description": "Workout tracker API — Azure Functions",
-  "main": "src/index.js",
   "scripts": {
     "start": "func start",
     "build": "node --check src/shared/tableClient.js && node --check src/sessions/index.js && node --check src/sessions/validation.js && node --check src/session/index.js && node --check src/stats/index.js && node --check sessions/index.js && node --check session/index.js && node --check stats/index.js",
