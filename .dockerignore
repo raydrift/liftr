@@ -5,6 +5,5 @@ scripts/
 api/node_modules/
 api/test/
 api/local.settings.json
-frontend/config.js
 *.md
 .DS_Store
