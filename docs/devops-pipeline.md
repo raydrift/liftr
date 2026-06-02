@@ -64,6 +64,8 @@ Steps:
 7. Read Static Web App deployment token from Azure.
 8. Deploy `frontend/` and `api/` to Azure Static Web Apps.
 
+The frontend includes `staticwebapp.config.json` to pin the managed API runtime to Node.js 20.
+
 ## Required GitHub Variables
 
 Create these under repository settings:
