@@ -6,12 +6,11 @@ Liftr uses GitHub Actions for CI and production deployment to Azure.
 
 The pipeline is intentionally lean for a one-user app with a `$20/month` Azure budget:
 
-- Build and test the Azure Functions API.
+- Build and test the Azure Functions API code.
 - Parse-check the static frontend JavaScript.
 - Format-check and validate Terraform.
 - Provision Azure resources with Terraform.
-- Deploy the Function App.
-- Deploy the Static Web App.
+- Deploy the Static Web App and its managed API.
 
 ## Workflows
 
@@ -62,9 +61,8 @@ Steps:
 4. Bootstrap Azure Storage for Terraform remote state.
 5. Terraform init against remote state, validate, plan, apply.
 6. Render `frontend/config.js` from Terraform output and GitHub secrets.
-7. Deploy Azure Functions API.
-8. Read Static Web App deployment token from Azure.
-9. Deploy `frontend/` to Azure Static Web Apps.
+7. Read Static Web App deployment token from Azure.
+8. Deploy `frontend/` and `api/` to Azure Static Web Apps.
 
 ## Required GitHub Variables
 
@@ -277,11 +275,12 @@ Avoid adding paid services outside the Terraform V1 architecture:
 - No Azure SQL.
 - No containers.
 - No API Management.
-- No paid App Service plan.
+- No standalone Function App.
+- No App Service plan.
 
 ## Notes
 
 - CI uses `-backend=false`; production deploy uses Azure Storage remote state.
 - The deploy workflow reads the Static Web App deployment token from Azure instead of storing it as a GitHub secret.
-- The deploy workflow writes `frontend/config.js` at deploy time. This config includes the Function App URL and V1 API key. That key is visible to browser users; use platform auth before opening the app beyond private use.
+- The deploy workflow writes `frontend/config.js` at deploy time. This config includes the Static Web Apps managed API URL and V1 API key. That key is visible to browser users; use platform auth before opening the app beyond private use.
 - AI assessment remains disabled in the frontend until a backend proxy endpoint is added.

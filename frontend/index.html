@@ -896,7 +896,7 @@ body::before {
 /* ═══════════════════════════════════════════
    CONFIG
 ═══════════════════════════════════════════ */
-const API_BASE = window.LIFTR_CONFIG?.API_BASE || window.ENV_API_BASE || "https://liftr-func.azurewebsites.net/api";
+const API_BASE = window.LIFTR_CONFIG?.API_BASE || window.ENV_API_BASE || "https://liftr-web.azurestaticapps.net/api";
 const API_KEY  = window.LIFTR_CONFIG?.API_KEY  || window.ENV_API_KEY  || "";
 
 /* ═══════════════════════════════════════════
@@ -1389,7 +1389,7 @@ async function runAssessment() {
   }
 
   out.style.display = "block";
-  out.textContent = "AI assessment is disabled for V1 until it is proxied through the Azure Function App. Your stats above are live; the coach report needs a backend endpoint so model API keys never ship to the browser.";
+  out.textContent = "AI assessment is disabled for V1 until it is proxied through the managed API. Your stats above are live; the coach report needs a backend endpoint so model API keys never ship to the browser.";
   btn.classList.remove("running");
 }
 

@@ -23,7 +23,7 @@ Mobile Browser
 Azure Static Web App
     |
     v
-Azure Function App
+Static Web Apps managed API
     |
     v
 Azure Storage Account
@@ -34,7 +34,7 @@ Azure Storage Account
 
 The Static Web App serves `frontend/index.html`.
 
-The Function App exposes HTTP endpoints under `/api`.
+The Static Web Apps managed API exposes HTTP endpoints under `/api`.
 
 Azure Table Storage persists sessions and exercise data.
 
@@ -50,8 +50,8 @@ azurerm_storage_account.main
 
 Purpose:
 
-- Stores Azure Function runtime state.
 - Hosts the Azure Tables used by the app.
+- Provides the connection string used by the managed API.
 
 Configuration:
 
@@ -78,65 +78,6 @@ Responsibilities:
 - `workoutsessions`: one entity per workout session.
 - `workoutexercises`: one entity per exercise inside a workout session.
 
-### App Service Plan
-
-Terraform resource:
-
-```text
-azurerm_service_plan.main
-```
-
-Purpose:
-
-- Hosts the Linux Function App.
-
-Configuration:
-
-- Linux.
-- Consumption SKU `Y1`.
-
-Rationale:
-
-- Consumption plan is low-cost and appropriate for personal sporadic usage.
-
-### Linux Function App
-
-Terraform resource:
-
-```text
-azurerm_linux_function_app.main
-```
-
-Purpose:
-
-- Runs the Node.js Azure Functions API.
-
-Runtime:
-
-- Node.js 20.
-- Functions worker runtime: `node`.
-
-Important app settings:
-
-```text
-AzureWebJobsStorage
-STORAGE_CONNECTION_STRING
-SESSIONS_TABLE_NAME
-EXERCISES_TABLE_NAME
-API_SECRET_KEY
-WEBSITE_RUN_FROM_PACKAGE
-```
-
-CORS:
-
-- Currently configured to allow the generated Static Web App host.
-- Application responses also include permissive CORS headers.
-
-Recommended cleanup:
-
-- Keep CORS restricted to the deployed frontend origin.
-- Avoid app-level wildcard CORS for private workout data.
-
 ### Static Web App
 
 Terraform resource:
@@ -148,16 +89,18 @@ azurerm_static_web_app.main
 Purpose:
 
 - Hosts the static frontend.
+- Hosts the managed Azure Functions API under `/api`.
 
 Configuration:
 
 - Free tier.
 - Region supplied by `var.static_web_app_location`.
+- App settings supply the API with storage connection details and `API_SECRET_KEY`.
 
 Deployment:
 
 - Terraform outputs `static_web_app_deployment_token`.
-- The frontend can be deployed manually or via GitHub Actions.
+- GitHub Actions deploys both `frontend/` and `api/`.
 
 ## Terraform Inputs
 
@@ -184,7 +127,7 @@ Expected deployment model:
 
 Current outputs:
 
-- `function_app_url`
+- `api_base_url`
 - `static_web_app_url`
 - `static_web_app_deployment_token`
 - `storage_account_name`
@@ -203,9 +146,9 @@ api/local.settings.json
 
 This file should remain local-only and should not contain production secrets in Git.
 
-### Azure Function App
+### Static Web Apps Managed API
 
-Terraform sets app settings directly on the Function App.
+Terraform sets app settings directly on the Static Web App. These settings are available to the managed API.
 
 Sensitive setting:
 
@@ -221,12 +164,11 @@ Terraform state will contain sensitive values, including storage keys and app se
 
 Current backend:
 
-- Local state by default.
-- Remote backend block is present but commented out.
+- Azure Storage remote backend for production deploys.
+- CI uses `terraform init -backend=false` only for validation.
 
 Recommendation:
 
-- Use an Azure Storage backend for remote state before production deployment.
 - Protect state access tightly.
 - Never commit `*.tfstate` files.
 
@@ -275,7 +217,7 @@ window.ENV_API_KEY
 Current implementation falls back to:
 
 ```text
-https://liftr-func.azurewebsites.net/api
+https://liftr-web.azurestaticapps.net/api
 ```
 
 Recommended improvement:
@@ -298,11 +240,11 @@ Risk:
 
 Recommended security posture for personal production:
 
-1. Restrict Function App CORS to the Static Web App origin.
+1. Prefer same-origin Static Web Apps API calls under `/api`.
 2. Remove wildcard CORS from application responses.
 3. Move any model API calls to the backend.
 4. Consider Azure Static Web Apps authentication if the app is reachable publicly.
-5. Store model API keys only in Function App app settings or Key Vault.
+5. Store model API keys only in Static Web Apps managed API app settings or Key Vault.
 
 Recommended security posture for multi-user future:
 
@@ -315,7 +257,7 @@ Recommended security posture for multi-user future:
 
 Current infrastructure does not explicitly provision Application Insights.
 
-Azure Functions can integrate with Application Insights for:
+Managed Functions can integrate with Application Insights-compatible observability for:
 
 - Request traces.
 - Function errors.
@@ -324,7 +266,7 @@ Azure Functions can integrate with Application Insights for:
 
 Recommended improvement:
 
-- Add Application Insights and connect it to the Function App.
+- Add Application Insights-compatible observability if needed.
 - Add structured logs for session creation, deletion, and stats computation failures.
 
 ## Cost Profile
@@ -332,7 +274,7 @@ Recommended improvement:
 The architecture is intentionally low-cost:
 
 - Static Web Apps Free tier.
-- Azure Functions Consumption plan.
+- Static Web Apps managed API.
 - Azure Table Storage in a Standard LRS account.
 
 For a single user, expected cost should be very low, dominated by storage account minimums and tiny transaction volume.

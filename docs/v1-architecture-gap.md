@@ -38,7 +38,7 @@ Mobile Browser
 Azure Static Web Apps Free
     |
     v
-Azure Functions Consumption
+Static Web Apps managed API
     |
     v
 Azure Storage Account Standard LRS
@@ -56,7 +56,7 @@ Avoid for V1:
 
 - Cosmos DB.
 - Azure SQL.
-- App Service Plan beyond Consumption.
+- Standalone Function App or App Service Plan.
 - Container Apps.
 - API Management.
 - Key Vault unless model/API secrets become more complex.
@@ -69,7 +69,7 @@ This architecture should fit comfortably inside `$20/month` for one user if conf
 Expected cost profile:
 
 - Static Web Apps Free: near `$0`.
-- Functions Consumption: likely near `$0` for personal usage.
+- Static Web Apps managed API: included in the Static Web Apps deployment path for personal usage.
 - Table Storage: very low for workout logs.
 - Storage Account: small baseline cost.
 - Application Insights: can become noisy if logs are verbose.
@@ -172,7 +172,7 @@ Recommended V1 options:
 Preferred path:
 
 - Add `POST /api/assessment`.
-- Store model API key in Function App app settings.
+- Store model API key in Static Web Apps managed API app settings.
 - Frontend sends workout stats/session summary to the Function.
 - Function calls model provider and returns text response.
 - Add basic rate limiting or cooldown for one-user budget control.
@@ -298,7 +298,7 @@ Agent/MCP:
 
 Current gap:
 
-- API base URL is hardcoded to a specific Function App URL fallback.
+- API base URL has a Static Web Apps managed API fallback and is overridden by deploy-time config.
 - `window.ENV_API_KEY` has no clear deployment mechanism.
 
 Required V1 outcome:
@@ -312,7 +312,7 @@ Recommended changes:
 
 ```js
 window.LIFTR_CONFIG = {
-  API_BASE: "https://<function-app>.azurewebsites.net/api"
+  API_BASE: "https://<static-web-app>.azurestaticapps.net/api"
 };
 ```
 

@@ -29,7 +29,7 @@ api/
 
 - `npm start`: runs the local Functions host.
 - `npm run build`: currently a placeholder.
-- `npm run deploy`: publishes to a fixed Function App name.
+- `npm run deploy`: placeholder; production API deploys through the Static Web Apps workflow.
 
 ## API Surface
 
@@ -201,7 +201,7 @@ X-API-Key: <API_SECRET_KEY>
 Important security note:
 
 - This is only lightweight protection if the frontend exposes the API key.
-- For stronger protection, use Azure Static Web Apps auth, Function App auth, or a real server-side session/auth flow.
+- For stronger protection, use Azure Static Web Apps auth or a real server-side session/auth flow.
 
 ## Data Model
 
@@ -283,11 +283,11 @@ Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS
 Access-Control-Allow-Headers: Content-Type, X-API-Key
 ```
 
-Terraform also configures Function App CORS to the Static Web App host.
+Terraform configures the Static Web Apps managed API app settings.
 
 Recommended cleanup:
 
-- Decide whether CORS is enforced in Function App platform config or in application responses.
+- Decide whether CORS remains useful once API calls are same-origin under Static Web Apps.
 - Avoid `Access-Control-Allow-Origin: *` if API contains private personal data.
 
 ## Recommended Backend Evolution
@@ -312,4 +312,3 @@ Long-term:
 1. Add auth if the app becomes multi-user or public.
 2. Move from fixed partition key to user-specific partition keys.
 3. Consider richer analytics tables if progress reporting grows.
-

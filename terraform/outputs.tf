@@ -1,6 +1,6 @@
-output "function_app_url" {
-  description = "Function App base URL — use this as VITE_API_BASE in frontend"
-  value       = "https://${azurerm_linux_function_app.main.default_hostname}/api"
+output "api_base_url" {
+  description = "Static Web Apps managed API base URL"
+  value       = "https://${azurerm_static_web_app.main.default_host_name}/api"
 }
 
 output "static_web_app_url" {

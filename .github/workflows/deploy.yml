@@ -121,22 +121,23 @@ jobs:
       - name: Terraform apply
         run: terraform -chdir=terraform apply -input=false -auto-approve tfplan
 
+      - name: Configure managed API origin
+        run: |
+          static_web_app_url=$(terraform -chdir=terraform output -raw static_web_app_url)
+          az staticwebapp appsettings set \
+            --name "${{ vars.APP_NAME }}-web" \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --setting-names "ALLOWED_ORIGIN=$static_web_app_url"
+
       - name: Render frontend runtime config
         run: |
-          api_base=$(terraform -chdir=terraform output -raw function_app_url)
+          api_base=$(terraform -chdir=terraform output -raw api_base_url)
           cat > frontend/config.js <<EOF
           window.LIFTR_CONFIG = {
             API_BASE: "$api_base",
             API_KEY: "${{ secrets.API_SECRET_KEY }}"
           };
           EOF
-
-      - name: Deploy Azure Functions API
-        uses: Azure/functions-action@v1
-        with:
-          app-name: ${{ vars.APP_NAME }}-func
-          package: api
-          remote-build: true
 
       - name: Read Static Web App deployment token
         id: swa-token
@@ -157,6 +158,6 @@ jobs:
           azure_static_web_apps_api_token: ${{ steps.swa-token.outputs.token }}
           action: upload
           app_location: frontend
-          api_location: ""
+          api_location: api
           output_location: ""
           skip_app_build: true

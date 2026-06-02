@@ -13,7 +13,7 @@ Mobile Browser
 Azure Static Web Apps Free
     |
     v
-Azure Functions Consumption
+Static Web Apps managed API
     |
     v
 Azure Storage Account Standard LRS
@@ -68,7 +68,7 @@ Then open:
 http://127.0.0.1:4173/
 ```
 
-API-backed screens require a reachable Function App and matching `config.js` values.
+API-backed screens require a reachable Static Web Apps managed API and matching `config.js` values.
 
 ## Terraform
 
@@ -100,27 +100,15 @@ Apply only after reviewing the plan:
 terraform -chdir=terraform apply
 ```
 
-## Deploy API
+## Deploy
 
-After Terraform creates the Function App:
-
-```bash
-cd api
-npm install
-func azure functionapp publish <function-app-name>
-```
-
-The default package script points at `liftr-func`.
-
-## Deploy Frontend
-
-Deploy `frontend/index.html` to the Azure Static Web App.
+The GitHub Actions deploy workflow provisions Azure resources, deploys `frontend/`, and deploys `api/` as the Static Web Apps managed API.
 
 Terraform outputs:
 
 ```bash
 terraform -chdir=terraform output static_web_app_url
-terraform -chdir=terraform output function_app_url
+terraform -chdir=terraform output api_base_url
 terraform -chdir=terraform output -raw static_web_app_deployment_token
 ```
 
@@ -138,11 +126,11 @@ terraform -chdir=terraform output -raw static_web_app_deployment_token
 For one user, keep the stack lean:
 
 - Static Web Apps Free
-- Functions Consumption
+- Static Web Apps managed API
 - Azure Table Storage
 - Optional low-volume Application Insights only
 
-Avoid Cosmos DB, SQL, containers, App Service paid tiers, and API Management for V1.
+Avoid Cosmos DB, SQL, containers, standalone Function Apps, App Service plans, and API Management for V1.
 
 Set Azure budget alerts at:
 

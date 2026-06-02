@@ -120,7 +120,7 @@ This design keeps the app simple, but changing the workout plan requires editing
 The frontend API config is currently:
 
 ```js
-const API_BASE = window.ENV_API_BASE || "https://liftr-func.azurewebsites.net/api";
+const API_BASE = window.ENV_API_BASE || "https://liftr-web.azurestaticapps.net/api";
 const API_KEY  = window.ENV_API_KEY  || "";
 ```
 

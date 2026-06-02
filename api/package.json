@@ -7,7 +7,7 @@
     "start": "func start",
     "build": "node --check src/shared/tableClient.js && node --check src/sessions/index.js && node --check src/sessions/validation.js && node --check src/session/index.js && node --check src/stats/index.js",
     "test": "node --test test/*.test.js",
-    "deploy": "func azure functionapp publish liftr-func"
+    "deploy": "echo 'API deploys with Azure Static Web Apps from the repository root'"
   },
   "dependencies": {
     "@azure/data-tables": "^13.2.2"
