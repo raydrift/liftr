@@ -39,37 +39,102 @@ resource "azurerm_storage_table" "exercises" {
 }
 
 # ─────────────────────────────────────────
-# App Service — Express app (free tier F1)
+# Container Registry — stores Docker images
 # ─────────────────────────────────────────
-resource "azurerm_service_plan" "main" {
-  name                = "${var.app_name}-plan"
+resource "azurerm_container_registry" "main" {
+  name                = "${replace(var.app_name, "-", "")}registry"
   resource_group_name = var.resource_group_name
   location            = var.location
-  os_type             = "Linux"
-  sku_name            = "F1"
+  sku                 = "Basic"
+  admin_enabled       = true
 
   tags = var.tags
 }
 
-resource "azurerm_linux_web_app" "main" {
-  name                = "${var.app_name}-web"
+# ─────────────────────────────────────────
+# Container Apps — serverless hosting
+# No VM quota required (Consumption plan)
+# ─────────────────────────────────────────
+resource "azurerm_container_app_environment" "main" {
+  name                = "${var.app_name}-env"
   resource_group_name = var.resource_group_name
   location            = var.location
-  service_plan_id     = azurerm_service_plan.main.id
 
-  site_config {
-    always_on = false # not supported on F1
-    application_stack {
-      node_version = "20-lts"
+  tags = var.tags
+}
+
+resource "azurerm_container_app" "main" {
+  name                         = "${var.app_name}-app"
+  container_app_environment_id = azurerm_container_app_environment.main.id
+  resource_group_name          = var.resource_group_name
+  revision_mode                = "Single"
+
+  registry {
+    server               = azurerm_container_registry.main.login_server
+    username             = azurerm_container_registry.main.admin_username
+    password_secret_name = "registry-password"
+  }
+
+  secret {
+    name  = "registry-password"
+    value = azurerm_container_registry.main.admin_password
+  }
+
+  secret {
+    name  = "storage-connection-string"
+    value = azurerm_storage_account.main.primary_connection_string
+  }
+
+  secret {
+    name  = "api-secret-key"
+    value = var.api_secret_key
+  }
+
+  template {
+    min_replicas = 0
+    max_replicas = 1
+
+    container {
+      name   = var.app_name
+      image  = "${azurerm_container_registry.main.login_server}/${var.app_name}:${var.container_image_tag}"
+      cpu    = 0.25
+      memory = "0.5Gi"
+
+      env {
+        name        = "STORAGE_CONNECTION_STRING"
+        secret_name = "storage-connection-string"
+      }
+
+      env {
+        name  = "SESSIONS_TABLE_NAME"
+        value = azurerm_storage_table.sessions.name
+      }
+
+      env {
+        name  = "EXERCISES_TABLE_NAME"
+        value = azurerm_storage_table.exercises.name
+      }
+
+      env {
+        name        = "API_SECRET_KEY"
+        secret_name = "api-secret-key"
+      }
+
+      env {
+        name  = "PORT"
+        value = "3000"
+      }
     }
   }
 
-  app_settings = {
-    STORAGE_CONNECTION_STRING      = azurerm_storage_account.main.primary_connection_string
-    SESSIONS_TABLE_NAME            = azurerm_storage_table.sessions.name
-    EXERCISES_TABLE_NAME           = azurerm_storage_table.exercises.name
-    API_SECRET_KEY                 = var.api_secret_key
-    SCM_DO_BUILD_DURING_DEPLOYMENT = "false"
+  ingress {
+    external_enabled = true
+    target_port      = 3000
+
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
+    }
   }
 
   tags = var.tags

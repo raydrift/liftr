@@ -32,6 +32,12 @@ variable "api_secret_key" {
   sensitive   = true
 }
 
+variable "container_image_tag" {
+  description = "Docker image tag to deploy (set to git SHA by CI)"
+  type        = string
+  default     = "latest"
+}
+
 variable "tags" {
   description = "Tags applied to all resources"
   type        = map(string)

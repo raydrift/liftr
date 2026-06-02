@@ -19,6 +19,7 @@ env:
   TF_VAR_app_name: ${{ vars.APP_NAME }}
   TF_VAR_storage_account_name: ${{ vars.STORAGE_ACCOUNT_NAME }}
   TF_VAR_api_secret_key: ${{ secrets.API_SECRET_KEY }}
+  TF_VAR_container_image_tag: ${{ github.sha }}
   TF_STATE_RESOURCE_GROUP: ${{ vars.TF_STATE_RESOURCE_GROUP }}
   TF_STATE_STORAGE_ACCOUNT: ${{ vars.TF_STATE_STORAGE_ACCOUNT }}
   TF_STATE_CONTAINER: ${{ vars.TF_STATE_CONTAINER }}
@@ -114,35 +115,36 @@ jobs:
       - name: Terraform validate
         run: terraform -chdir=terraform validate
 
-      - name: Terraform plan
-        run: terraform -chdir=terraform plan -input=false -out=tfplan
+      # Phase 1: create storage + registry before building the image
+      - name: Terraform apply (storage and registry)
+        run: |
+          terraform -chdir=terraform apply -input=false -auto-approve \
+            -target=azurerm_storage_account.main \
+            -target=azurerm_storage_table.sessions \
+            -target=azurerm_storage_table.exercises \
+            -target=azurerm_container_registry.main
 
-      - name: Terraform apply
-        run: terraform -chdir=terraform apply -input=false -auto-approve tfplan
+      - name: Get registry details
+        run: |
+          echo "ACR_NAME=$(terraform -chdir=terraform output -raw container_registry_name)" >> $GITHUB_ENV
+          echo "ACR_LOGIN_SERVER=$(terraform -chdir=terraform output -raw container_registry_login_server)" >> $GITHUB_ENV
 
       - name: Render frontend config
         run: |
-          cat > frontend/config.js <<'EOF'
+          cat > frontend/config.js <<'JSEOF'
           window.LIFTR_CONFIG = {
             API_BASE: "/api",
             API_KEY: "${{ secrets.API_SECRET_KEY }}"
           };
-          EOF
+          JSEOF
 
-      - name: Package app
+      # Phase 2: build and push image now that ACR exists
+      - name: Build and push image
         run: |
-          mkdir dist
-          cp api/server.js dist/
-          cp -r api/src dist/src
-          cp api/package.json api/package-lock.json dist/
-          cp -r frontend dist/frontend
-          cd dist && npm ci --omit=dev
+          az acr login --name $ACR_NAME
+          docker build -t $ACR_LOGIN_SERVER/${{ vars.APP_NAME }}:${{ github.sha }} .
+          docker push $ACR_LOGIN_SERVER/${{ vars.APP_NAME }}:${{ github.sha }}
 
-      - name: Create deployment zip
-        run: cd dist && zip -r ../app.zip .
-
-      - name: Deploy to App Service
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ vars.APP_NAME }}-web
-          package: app.zip
+      # Phase 3: create container app environment + app now that image exists
+      - name: Terraform apply (container app)
+        run: terraform -chdir=terraform apply -input=false -auto-approve
