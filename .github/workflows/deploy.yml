@@ -16,7 +16,6 @@ env:
   TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   TF_VAR_resource_group_name: ${{ vars.AZURE_RESOURCE_GROUP }}
   TF_VAR_location: ${{ vars.AZURE_LOCATION }}
-  TF_VAR_static_web_app_location: ${{ vars.AZURE_STATIC_WEB_APP_LOCATION }}
   TF_VAR_app_name: ${{ vars.APP_NAME }}
   TF_VAR_storage_account_name: ${{ vars.STORAGE_ACCOUNT_NAME }}
   TF_VAR_api_secret_key: ${{ secrets.API_SECRET_KEY }}
@@ -121,44 +120,29 @@ jobs:
       - name: Terraform apply
         run: terraform -chdir=terraform apply -input=false -auto-approve tfplan
 
-      - name: Configure managed API origin
+      - name: Render frontend config
         run: |
-          static_web_app_url=$(terraform -chdir=terraform output -raw static_web_app_url)
-          az staticwebapp appsettings set \
-            --name "${{ vars.APP_NAME }}-web" \
-            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
-            --setting-names "ALLOWED_ORIGIN=$static_web_app_url"
-
-      - name: Render frontend runtime config
-        run: |
-          api_base=$(terraform -chdir=terraform output -raw api_base_url)
-          cat > frontend/config.js <<EOF
+          cat > frontend/config.js <<'EOF'
           window.LIFTR_CONFIG = {
-            API_BASE: "$api_base",
+            API_BASE: "/api",
             API_KEY: "${{ secrets.API_SECRET_KEY }}"
           };
           EOF
 
-      - name: Read Static Web App deployment token
-        id: swa-token
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            token=$(az staticwebapp secrets list \
-              --name "${{ vars.APP_NAME }}-web" \
-              --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
-              --query "properties.apiKey" \
-              --output tsv)
-            echo "::add-mask::$token"
-            echo "token=$token" >> "$GITHUB_OUTPUT"
+      - name: Package app
+        run: |
+          mkdir dist
+          cp api/server.js dist/
+          cp -r api/src dist/src
+          cp api/package.json api/package-lock.json dist/
+          cp -r frontend dist/frontend
+          cd dist && npm ci --omit=dev
 
-      - name: Deploy frontend to Static Web App
-        uses: Azure/static-web-apps-deploy@v1
+      - name: Create deployment zip
+        run: cd dist && zip -r ../app.zip .
+
+      - name: Deploy to App Service
+        uses: azure/webapps-deploy@v3
         with:
-          azure_static_web_apps_api_token: ${{ steps.swa-token.outputs.token }}
-          action: upload
-          app_location: frontend
-          api_location: api
-          output_location: ""
-          skip_app_build: true
-          skip_api_build: true
+          app-name: ${{ vars.APP_NAME }}-web
+          package: app.zip

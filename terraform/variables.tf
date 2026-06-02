@@ -9,15 +9,9 @@ variable "resource_group_name" {
 }
 
 variable "location" {
-  description = "Azure region for most resources"
+  description = "Azure region for all resources"
   type        = string
   default     = "eastus"
-}
-
-variable "static_web_app_location" {
-  description = "Azure region for Static Web App (limited availability)"
-  type        = string
-  default     = "eastus2"
 }
 
 variable "app_name" {
