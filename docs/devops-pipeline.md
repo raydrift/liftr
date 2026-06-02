@@ -59,11 +59,12 @@ Steps:
 1. Build and test API.
 2. Check frontend JavaScript.
 3. Authenticate to Azure with GitHub OIDC.
-4. Terraform init, validate, plan, apply.
-5. Render `frontend/config.js` from Terraform output and GitHub secrets.
-6. Deploy Azure Functions API.
-7. Read Static Web App deployment token from Azure.
-8. Deploy `frontend/` to Azure Static Web Apps.
+4. Bootstrap Azure Storage for Terraform remote state.
+5. Terraform init against remote state, validate, plan, apply.
+6. Render `frontend/config.js` from Terraform output and GitHub secrets.
+7. Deploy Azure Functions API.
+8. Read Static Web App deployment token from Azure.
+9. Deploy `frontend/` to Azure Static Web Apps.
 
 ## Required GitHub Variables
 
@@ -75,6 +76,10 @@ AZURE_LOCATION
 AZURE_STATIC_WEB_APP_LOCATION
 APP_NAME
 STORAGE_ACCOUNT_NAME
+TF_STATE_RESOURCE_GROUP
+TF_STATE_STORAGE_ACCOUNT
+TF_STATE_CONTAINER
+TF_STATE_KEY
 ```
 
 Recommended values for the current Terraform defaults:
@@ -85,9 +90,13 @@ AZURE_LOCATION=eastus
 AZURE_STATIC_WEB_APP_LOCATION=eastus2
 APP_NAME=liftr
 STORAGE_ACCOUNT_NAME=liftrstore
+TF_STATE_RESOURCE_GROUP=liftr
+TF_STATE_STORAGE_ACCOUNT=liftrtfstate43840064
+TF_STATE_CONTAINER=tfstate
+TF_STATE_KEY=liftr-prod.tfstate
 ```
 
-`STORAGE_ACCOUNT_NAME` must be globally unique, lowercase, alphanumeric, and 3-24 characters.
+`STORAGE_ACCOUNT_NAME` and `TF_STATE_STORAGE_ACCOUNT` must be globally unique, lowercase, alphanumeric, and 3-24 characters.
 
 ## Required GitHub Secrets
 
@@ -101,6 +110,29 @@ API_SECRET_KEY
 ```
 
 No Azure client secret is required. The deploy workflow uses GitHub OIDC through `azure/login` and Terraform `ARM_USE_OIDC=true`.
+
+## Terraform Remote State
+
+Production deploys store Terraform state in Azure Blob Storage:
+
+```text
+Resource group: liftr
+Storage account: liftrtfstate43840064
+Container: tfstate
+State key: liftr-prod.tfstate
+```
+
+The deploy workflow bootstraps this storage account and container before `terraform init`.
+
+The `liftr` resource group must already exist. The GitHub deployment identity is intentionally scoped to the resource group and should not need subscription-wide permission to create resource groups.
+
+CI still uses:
+
+```bash
+terraform -chdir=terraform init -backend=false
+```
+
+That keeps pull-request and push validation independent of Azure credentials. Only the production deploy workflow reads and writes remote state.
 
 ## Azure OIDC Identity
 
@@ -128,6 +160,7 @@ You still need Azure permission to:
 - Create resources in the `liftr` resource group.
 - Create a user-assigned managed identity.
 - Assign RBAC roles, or have an Azure owner assign the role for you.
+- Read storage account keys for Terraform remote state bootstrap.
 
 Create the managed identity and federated credential:
 
@@ -248,7 +281,7 @@ Avoid adding paid services outside the Terraform V1 architecture:
 
 ## Notes
 
-- Terraform uses `-backend=false` in CI/CD for the current V1 setup. For a more durable production setup, configure remote Terraform state in Azure Storage and remove `-backend=false`.
+- CI uses `-backend=false`; production deploy uses Azure Storage remote state.
 - The deploy workflow reads the Static Web App deployment token from Azure instead of storing it as a GitHub secret.
 - The deploy workflow writes `frontend/config.js` at deploy time. This config includes the Function App URL and V1 API key. That key is visible to browser users; use platform auth before opening the app beyond private use.
 - AI assessment remains disabled in the frontend until a backend proxy endpoint is added.

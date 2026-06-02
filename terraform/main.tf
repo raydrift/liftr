@@ -6,13 +6,7 @@ terraform {
     }
   }
 
-  # Uncomment and configure for remote state (recommended)
-  # backend "azurerm" {
-  #   resource_group_name  = "your-rg"
-  #   storage_account_name = "yourtfstate"
-  #   container_name       = "tfstate"
-  #   key                  = "workout-app.tfstate"
-  # }
+  backend "azurerm" {}
 }
 
 provider "azurerm" {

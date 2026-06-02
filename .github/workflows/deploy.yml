@@ -20,6 +20,10 @@ env:
   TF_VAR_app_name: ${{ vars.APP_NAME }}
   TF_VAR_storage_account_name: ${{ vars.STORAGE_ACCOUNT_NAME }}
   TF_VAR_api_secret_key: ${{ secrets.API_SECRET_KEY }}
+  TF_STATE_RESOURCE_GROUP: ${{ vars.TF_STATE_RESOURCE_GROUP }}
+  TF_STATE_STORAGE_ACCOUNT: ${{ vars.TF_STATE_STORAGE_ACCOUNT }}
+  TF_STATE_CONTAINER: ${{ vars.TF_STATE_CONTAINER }}
+  TF_STATE_KEY: ${{ vars.TF_STATE_KEY }}
 
 jobs:
   deploy:
@@ -63,8 +67,50 @@ jobs:
         with:
           terraform_wrapper: false
 
+      - name: Bootstrap Terraform remote state
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            if ! az storage account show \
+              --name "$TF_STATE_STORAGE_ACCOUNT" \
+              --resource-group "$TF_STATE_RESOURCE_GROUP" >/dev/null 2>&1; then
+              az storage account create \
+                --name "$TF_STATE_STORAGE_ACCOUNT" \
+                --resource-group "$TF_STATE_RESOURCE_GROUP" \
+                --location "${{ vars.AZURE_LOCATION }}" \
+                --sku Standard_LRS \
+                --kind StorageV2 \
+                --allow-blob-public-access false \
+                --min-tls-version TLS1_2
+            fi
+
+            az storage account blob-service-properties update \
+              --account-name "$TF_STATE_STORAGE_ACCOUNT" \
+              --resource-group "$TF_STATE_RESOURCE_GROUP" \
+              --enable-versioning true
+
+            account_key=$(az storage account keys list \
+              --account-name "$TF_STATE_STORAGE_ACCOUNT" \
+              --resource-group "$TF_STATE_RESOURCE_GROUP" \
+              --query "[0].value" \
+              --output tsv)
+
+            az storage container create \
+              --name "$TF_STATE_CONTAINER" \
+              --account-name "$TF_STATE_STORAGE_ACCOUNT" \
+              --account-key "$account_key"
+
       - name: Terraform init
-        run: terraform -chdir=terraform init -backend=false
+        run: |
+          terraform -chdir=terraform init \
+            -backend-config="resource_group_name=$TF_STATE_RESOURCE_GROUP" \
+            -backend-config="storage_account_name=$TF_STATE_STORAGE_ACCOUNT" \
+            -backend-config="container_name=$TF_STATE_CONTAINER" \
+            -backend-config="key=$TF_STATE_KEY" \
+            -backend-config="use_oidc=true" \
+            -backend-config="client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+            -backend-config="tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
+            -backend-config="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}"
 
       - name: Terraform validate
         run: terraform -chdir=terraform validate
