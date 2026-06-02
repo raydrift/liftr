@@ -79,10 +79,10 @@ jobs:
         run: |
           api_base=$(terraform -chdir=terraform output -raw function_app_url)
           cat > frontend/config.js <<EOF
-window.LIFTR_CONFIG = {
-  API_BASE: "$api_base",
-  API_KEY: "${{ secrets.API_SECRET_KEY }}"
-};
+          window.LIFTR_CONFIG = {
+            API_BASE: "$api_base",
+            API_KEY: "${{ secrets.API_SECRET_KEY }}"
+          };
           EOF
 
       - name: Deploy Azure Functions API
