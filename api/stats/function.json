@@ -1,5 +1,4 @@
 {
-  "scriptFile": "../src/stats/index.js",
   "bindings": [
     {
       "authLevel": "anonymous",

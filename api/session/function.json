@@ -1,5 +1,4 @@
 {
-  "scriptFile": "../src/session/index.js",
   "bindings": [
     {
       "authLevel": "anonymous",
