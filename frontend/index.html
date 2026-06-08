@@ -7,6 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#080808">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-title" content="ROHIT.FIT">
 <title>ROHIT.FIT</title>
 <script src="config.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -764,6 +766,228 @@ body::before {
   margin-bottom: 10px;
 }
 
+/* ══════════════════════════════════════════
+   ONBOARDING
+══════════════════════════════════════════ */
+.onboarding {
+  position: fixed; inset: 0; z-index: 998;
+  background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  padding: 0 24px calc(40px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+}
+.ob-progress {
+  width: 100%; height: 3px; background: var(--border);
+  position: sticky; top: 0; z-index: 1; flex-shrink: 0;
+}
+.ob-progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--push), var(--gold));
+  border-radius: 0 2px 2px 0; transition: width 0.4s cubic-bezier(0.22,1,0.36,1);
+}
+.ob-step { display: none; flex-direction: column; width: 100%; flex: 1; padding-top: 40px; }
+.ob-step.active { display: flex; animation: pageIn 0.35s cubic-bezier(0.22,1,0.36,1); }
+.ob-logo {
+  font-family: 'Unbounded', sans-serif; font-size: 32px; font-weight: 900;
+  letter-spacing: -2px; margin-bottom: 24px;
+  background: linear-gradient(135deg, var(--push), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.ob-tagline {
+  font-family: 'Unbounded', sans-serif; font-size: 38px; font-weight: 700;
+  letter-spacing: -2px; line-height: 1.1; margin-bottom: 16px;
+}
+.ob-q {
+  font-family: 'Unbounded', sans-serif; font-size: 28px; font-weight: 700;
+  letter-spacing: -1.5px; line-height: 1.2; margin-bottom: 12px;
+}
+.ob-sub, .ob-sub-q {
+  font-size: 13px; color: var(--ink2); line-height: 1.7;
+  font-family: 'Space Mono', monospace; margin-bottom: 24px;
+}
+.ob-welcome { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.ob-choices { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; flex: 1; }
+.ob-choice {
+  padding: 18px 20px; border-radius: var(--r); text-align: left;
+  border: 1.5px solid var(--border); background: var(--glass);
+  font-size: 15px; font-weight: 600; color: var(--ink2);
+  transition: all 0.2s cubic-bezier(0.22,1,0.36,1);
+}
+.ob-choice:active, .ob-choice.selected {
+  border-color: var(--push); background: rgba(255,77,28,0.08); color: var(--ink);
+}
+.ob-textarea {
+  width: 100%; padding: 14px 16px; border-radius: var(--r);
+  background: var(--glass); border: 1.5px solid var(--border);
+  color: var(--ink); font-family: 'Space Grotesk', sans-serif; font-size: 14px;
+  resize: none; min-height: 100px; margin-bottom: 16px; flex: 1;
+  outline: none; transition: border-color 0.2s;
+}
+.ob-textarea:focus { border-color: var(--border2); }
+.ob-schedule { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; flex: 1; justify-content: center; }
+.ob-sched-row { display: flex; align-items: center; justify-content: space-between; }
+.ob-sched-label { font-size: 14px; font-weight: 600; color: var(--ink2); }
+.ob-stepper { max-width: 160px; }
+.ob-btn {
+  width: 100%; height: 56px; border-radius: 14px;
+  font-size: 15px; font-weight: 700; margin-bottom: 10px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.ob-btn-primary {
+  background: linear-gradient(135deg, var(--push), #ff7a20);
+  color: white; box-shadow: 0 4px 20px rgba(255,77,28,0.3);
+}
+.ob-btn-primary:active { transform: scale(0.97); }
+.ob-btn-back {
+  background: var(--glass); border: 1px solid var(--border);
+  color: var(--ink2); font-size: 13px; height: 44px;
+}
+.ob-btn-skip {
+  background: none; color: var(--ink3); font-size: 13px; height: 40px;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+
+/* ══════════════════════════════════════════
+   PROFILE PAGE
+══════════════════════════════════════════ */
+.profile-textarea {
+  width: 100%; padding: 12px 14px; border-radius: 10px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  color: var(--ink); font-family: 'Space Grotesk', sans-serif; font-size: 14px;
+  resize: none; min-height: 80px; outline: none;
+  transition: border-color 0.2s;
+}
+.profile-textarea:focus { border-color: var(--border2); }
+.profile-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0;
+}
+.profile-row-label { font-size: 13px; color: var(--ink2); font-weight: 600; }
+.profile-select {
+  background: var(--glass2); border: 1px solid var(--border2);
+  color: var(--ink); padding: 8px 12px; border-radius: 10px;
+  font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600;
+  outline: none; cursor: pointer;
+}
+.weight-input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.weight-input {
+  flex: 1; padding: 12px 14px; border-radius: 10px;
+  background: var(--glass); border: 1px solid var(--border);
+  color: var(--ink); font-family: 'Space Mono', monospace; font-size: 16px;
+  outline: none; transition: border-color 0.2s;
+}
+.weight-input:focus { border-color: var(--border2); }
+.weight-unit { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--ink2); }
+.weight-chart { width: 100%; margin-bottom: 8px; }
+.weight-latest {
+  font-family: 'Space Mono', monospace; font-size: 11px;
+  color: var(--ink2); text-align: center;
+}
+
+/* ══════════════════════════════════════════
+   LOG EXTRAS — RPE + NOTES
+══════════════════════════════════════════ */
+.log-extra-card {
+  margin-bottom: 12px; border-radius: var(--r);
+  border: 1px solid var(--border); background: var(--glass);
+  padding: 14px 16px;
+}
+.log-notes-input {
+  width: 100%; padding: 10px 12px; border-radius: 10px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  color: var(--ink); font-family: 'Space Grotesk', sans-serif; font-size: 14px;
+  resize: none; min-height: 70px; outline: none; margin-top: 8px;
+  transition: border-color 0.2s;
+}
+.log-notes-input:focus { border-color: var(--border2); }
+.rpe-row { display: flex; align-items: center; gap: 16px; margin: 8px 0; }
+.rpe-desc { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--ink2); letter-spacing: 1px; }
+.rpe-scale { display: flex; gap: 6px; margin-top: 10px; }
+.rpe-dot {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--glass2); border: 1.5px solid var(--border);
+  transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  flex-shrink: 0;
+}
+.rpe-dot.active { background: var(--push); border-color: var(--push); transform: scale(1.1); }
+.hist-rpe {
+  display: inline-flex; font-family: 'Space Mono', monospace; font-size: 10px;
+  padding: 3px 10px; border-radius: 100px; margin-top: 10px;
+  background: rgba(240,180,41,0.1); border: 1px solid rgba(240,180,41,0.3);
+  color: var(--gold); letter-spacing: 1px;
+}
+.hist-notes {
+  font-size: 12px; color: var(--ink2); font-style: italic;
+  margin-top: 8px; line-height: 1.6; padding-left: 4px;
+  border-left: 2px solid var(--border2);
+}
+
+/* ══════════════════════════════════════════
+   REST TIMER
+══════════════════════════════════════════ */
+.rest-timer {
+  position: fixed;
+  bottom: calc(84px + env(safe-area-inset-bottom) + 10px);
+  left: 16px; right: 16px; z-index: 200;
+  background: rgba(10,10,10,0.95); backdrop-filter: blur(20px);
+  border: 1px solid var(--border2); border-radius: 14px;
+  overflow: hidden; flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  animation: pageIn 0.3s cubic-bezier(0.22,1,0.36,1);
+}
+.rest-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px;
+}
+.rest-label {
+  font-family: 'Space Mono', monospace; font-size: 10px;
+  letter-spacing: 3px; color: var(--ink3); text-transform: uppercase;
+}
+.rest-count {
+  font-family: 'Unbounded', sans-serif; font-size: 26px; font-weight: 700;
+  color: var(--legs); letter-spacing: -1px;
+}
+.rest-skip {
+  font-family: 'Space Mono', monospace; font-size: 11px;
+  color: var(--ink2); letter-spacing: 1px; padding: 8px 14px;
+  border-radius: 100px; border: 1px solid var(--border2);
+  background: var(--glass2); min-height: 36px;
+}
+.rest-progress { height: 3px; background: var(--border); }
+.rest-fill {
+  height: 100%; background: linear-gradient(90deg, var(--legs2), var(--legs));
+  transition: width 1s linear; border-radius: 0 2px 2px 0;
+}
+
+/* ══════════════════════════════════════════
+   ANALYTICS / ASSESS ADDITIONS
+══════════════════════════════════════════ */
+.vol-chart {
+  display: flex; align-items: flex-end; gap: 8px;
+  height: 100px; margin-bottom: 8px;
+}
+.vol-week { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; }
+.vol-bars { display: flex; align-items: flex-end; gap: 3px; flex: 1; width: 100%; }
+.vol-bar { flex: 1; border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.6s cubic-bezier(0.22,1,0.36,1); }
+.vol-week-label { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--ink3); margin-top: 6px; letter-spacing: 0.5px; }
+.vol-legend { display: flex; gap: 14px; margin-top: 10px; }
+.vol-leg-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+.vol-legend span { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--ink2); }
+.balance-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 10px; background: var(--border); }
+.balance-seg { height: 100%; transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
+.balance-labels { display: flex; justify-content: space-between; }
+.balance-labels span { font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+.plateau-item {
+  display: flex; flex-direction: column; padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.plateau-item:last-child { border-bottom: none; }
+.plateau-name { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+.plateau-detail { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--gold); }
+.section-note { font-size: 10px; font-weight: 400; color: var(--ink3); font-family: 'Space Mono', monospace; letter-spacing: 1px; }
+.stat-tile.t-rpe::before { background: var(--gold); }
+.t-rpe .stat-val { color: var(--gold); font-size: 28px; }
+
 /* Desktop tweaks */
 @media (min-width: 600px) {
   .page { padding: 0 24px 32px; }
@@ -773,6 +997,80 @@ body::before {
 </style>
 </head>
 <body>
+
+<!-- ONBOARDING OVERLAY -->
+<div id="onboarding" class="onboarding" style="display:none">
+  <div class="ob-progress"><div class="ob-progress-fill" id="ob-fill" style="width:0%"></div></div>
+
+  <div class="ob-step active" data-step="1">
+    <div class="ob-welcome">
+      <div class="ob-logo">ROHIT.FIT</div>
+      <div class="ob-tagline">Your intelligent<br>gym coach.</div>
+      <div class="ob-sub">Let's build your coaching profile so the AI knows how to guide you. Takes 30 seconds.</div>
+    </div>
+    <button class="ob-btn ob-btn-primary" onclick="obNext()">Get Started →</button>
+  </div>
+
+  <div class="ob-step" data-step="2">
+    <div class="ob-q">What's your<br>primary goal?</div>
+    <div class="ob-choices">
+      <button class="ob-choice" data-val="Build Muscle &amp; Strength" onclick="obSelect(this,'goal')">💪 Build Muscle &amp; Strength</button>
+      <button class="ob-choice" data-val="General Fitness" onclick="obSelect(this,'goal')">🏃 General Fitness</button>
+      <button class="ob-choice" data-val="Athletic Performance" onclick="obSelect(this,'goal')">⚡ Athletic Performance</button>
+      <button class="ob-choice" data-val="Lose Weight &amp; Tone" onclick="obSelect(this,'goal')">🔥 Lose Weight &amp; Tone</button>
+    </div>
+    <button class="ob-btn ob-btn-primary" onclick="obNext()">Next →</button>
+    <button class="ob-btn ob-btn-back" onclick="obBack()">← Back</button>
+  </div>
+
+  <div class="ob-step" data-step="3">
+    <div class="ob-q">How long have you been<br>training seriously?</div>
+    <div class="ob-choices">
+      <button class="ob-choice" data-val="Beginner" onclick="obSelect(this,'experience')">🌱 Under 1 year</button>
+      <button class="ob-choice" data-val="Intermediate" onclick="obSelect(this,'experience')">🏋️ 1–3 years</button>
+      <button class="ob-choice" data-val="Advanced" onclick="obSelect(this,'experience')">🔱 3+ years</button>
+    </div>
+    <button class="ob-btn ob-btn-primary" onclick="obNext()">Next →</button>
+    <button class="ob-btn ob-btn-back" onclick="obBack()">← Back</button>
+  </div>
+
+  <div class="ob-step" data-step="4">
+    <div class="ob-q">Any injuries or<br>limitations?</div>
+    <div class="ob-sub-q">The coach will factor these into every recommendation.</div>
+    <textarea id="ob-limitations" class="ob-textarea"
+      placeholder="e.g. weak hamstrings, avoid heavy knee flexion..." maxlength="500"></textarea>
+    <button class="ob-btn ob-btn-primary" onclick="obNext()">Next →</button>
+    <button class="ob-btn ob-btn-skip" onclick="obNext()">Skip this step</button>
+    <button class="ob-btn ob-btn-back" onclick="obBack()">← Back</button>
+  </div>
+
+  <div class="ob-step" data-step="5">
+    <div class="ob-q">How do you train?</div>
+    <div class="ob-schedule">
+      <div class="ob-sched-row">
+        <div class="ob-sched-label">Days per week</div>
+        <div class="stepper ob-stepper">
+          <button class="step-btn" onclick="obStep('days',-1)">−</button>
+          <div class="step-val" id="ob-days-val">4</div>
+          <button class="step-btn" onclick="obStep('days',1)">+</button>
+        </div>
+      </div>
+      <div class="ob-sched-row">
+        <div class="ob-sched-label">Minutes per session</div>
+        <div class="stepper ob-stepper">
+          <button class="step-btn" onclick="obStep('mins',-15)">−</button>
+          <div class="step-val" id="ob-mins-val">60</div>
+          <button class="step-btn" onclick="obStep('mins',15)">+</button>
+        </div>
+      </div>
+    </div>
+    <button class="ob-btn ob-btn-primary" id="ob-finish-btn" onclick="obFinish()">
+      <span id="ob-finish-text">Build My Profile →</span>
+      <div class="spin" id="ob-spin" style="display:none"></div>
+    </button>
+    <button class="ob-btn ob-btn-back" onclick="obBack()">← Back</button>
+  </div>
+</div>
 
 <!-- SPLASH -->
 <div id="splash">
@@ -851,11 +1149,36 @@ body::before {
       <div class="stat-val" id="s-streak">—</div>
       <div class="stat-label">🔥 Streak</div>
     </div>
+    <div class="stat-tile t-rpe" style="grid-column:1/-1">
+      <div class="stat-val" id="s-rpe">—</div>
+      <div class="stat-label">Avg RPE (8 weeks)</div>
+    </div>
   </div>
 
   <div class="assess-section" id="strength-section" style="display:none">
     <h3>💪 Strength Progress</h3>
     <div id="strength-bars"></div>
+  </div>
+
+  <div class="assess-section" id="vol-section" style="display:none">
+    <h3>📈 Weekly Volume <span class="section-note">last 4 weeks</span></h3>
+    <div class="vol-chart" id="vol-chart"></div>
+    <div class="vol-legend">
+      <span><span class="vol-leg-dot" style="background:var(--push)"></span>Push</span>
+      <span><span class="vol-leg-dot" style="background:var(--pull)"></span>Pull</span>
+      <span><span class="vol-leg-dot" style="background:var(--legs)"></span>Legs</span>
+    </div>
+  </div>
+
+  <div class="assess-section" id="balance-section" style="display:none">
+    <h3>⚖️ Volume Balance <span class="section-note">last 4 weeks</span></h3>
+    <div class="balance-bar" id="balance-bar"></div>
+    <div class="balance-labels" id="balance-labels"></div>
+  </div>
+
+  <div class="assess-section" id="plateau-section" style="display:none">
+    <h3>⚠️ Plateaus Detected</h3>
+    <div id="plateau-list"></div>
   </div>
 
   <div class="ai-section">
@@ -866,6 +1189,72 @@ body::before {
       <span style="font-size:18px">→</span>
     </button>
     <div class="ai-output" id="ai-out" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ═══════════ PROFILE PAGE ═══════════ -->
+<div id="page-profile" class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Profile</div>
+      <div class="page-sub" id="profile-sub">// YOUR COACHING PROFILE</div>
+    </div>
+  </div>
+
+  <div class="assess-section">
+    <h3>🎯 Primary Goal</h3>
+    <textarea id="pf-goals" class="profile-textarea"
+      placeholder="e.g. Build strength, fix hamstring weakness..."
+      maxlength="500" onblur="saveProfileField()"></textarea>
+  </div>
+
+  <div class="assess-section">
+    <h3>🏋️ Training Profile</h3>
+    <div class="profile-row">
+      <div class="profile-row-label">Experience level</div>
+      <select id="pf-experience" class="profile-select" onchange="saveProfileField()">
+        <option value="Beginner">Beginner</option>
+        <option value="Intermediate">Intermediate</option>
+        <option value="Advanced">Advanced</option>
+      </select>
+    </div>
+    <div class="divider"></div>
+    <div class="profile-row">
+      <div class="profile-row-label">Days per week</div>
+      <div class="stepper" style="max-width:140px">
+        <button class="step-btn" onclick="pfStep('days',-1)">−</button>
+        <div class="step-val" id="pf-days-val">4</div>
+        <button class="step-btn" onclick="pfStep('days',1)">+</button>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="profile-row">
+      <div class="profile-row-label">Session length (min)</div>
+      <div class="stepper" style="max-width:140px">
+        <button class="step-btn" onclick="pfStep('mins',-15)">−</button>
+        <div class="step-val" id="pf-mins-val">60</div>
+        <button class="step-btn" onclick="pfStep('mins',15)">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="assess-section">
+    <h3>⚠️ Limitations &amp; Injuries</h3>
+    <textarea id="pf-limitations" class="profile-textarea"
+      placeholder="e.g. Weak hamstrings, avoid heavy knee flexion..."
+      maxlength="500" onblur="saveProfileField()"></textarea>
+  </div>
+
+  <div class="assess-section">
+    <h3>⚖️ Body Weight</h3>
+    <div class="weight-input-row">
+      <input type="number" id="pf-weight-input" class="weight-input"
+        placeholder="e.g. 175" min="50" max="999" step="0.5">
+      <span class="weight-unit">lb</span>
+      <button class="mini-action" onclick="logWeight()">Log</button>
+    </div>
+    <svg id="weight-chart" class="weight-chart" viewBox="0 0 280 70" style="display:none"></svg>
+    <div id="weight-latest" class="weight-latest" style="display:none"></div>
   </div>
 </div>
 
@@ -884,8 +1273,21 @@ body::before {
     <button class="nav-btn" id="nb-assess" onclick="goPage('assess',this)">
       <div class="nav-icon">📊</div>Assess
     </button>
+    <button class="nav-btn" id="nb-profile" onclick="goPage('profile',this)">
+      <div class="nav-icon">👤</div>Profile
+    </button>
   </div>
 </nav>
+
+<!-- REST TIMER -->
+<div id="rest-timer" class="rest-timer" style="display:none">
+  <div class="rest-inner">
+    <span class="rest-label">Rest</span>
+    <span class="rest-count" id="rest-count">2:00</span>
+    <button class="rest-skip" onclick="skipRest()">Skip →</button>
+  </div>
+  <div class="rest-progress"><div id="rest-fill" class="rest-fill" style="width:100%"></div></div>
+</div>
 
 <!-- TOAST -->
 <div class="toast-wrap">
@@ -972,6 +1374,15 @@ let selectedDay   = null;
 let setData       = {};   // {dayKey: {exIdx: {setIdx: {w, r, done}}}}
 let sessions      = [];
 let statsData     = null;
+let analyticsData = null;
+let sessionRpe    = 7;
+let pfDays        = 4;
+let pfMins        = 60;
+let metricsData   = [];
+let profileData   = {};
+const obState     = { step: 1, totalSteps: 5, goal: "", experience: "" };
+const restState   = { active: false, total: 0, remaining: 0, ivl: null };
+const RPE_LABELS  = { 1:"Very Easy",2:"Easy",3:"Easy",4:"Moderate",5:"Moderate",6:"Moderate",7:"Hard",8:"Hard",9:"Very Hard",10:"Max Effort" };
 
 /* ═══════════════════════════════════════════
    API
@@ -991,7 +1402,8 @@ function goPage(page, btn) {
   btn.classList.add("active");
   if (page === "log")     initLogPage();
   if (page === "history") loadHistory();
-  if (page === "assess")  loadStats();
+  if (page === "assess")  { loadStats(); loadAnalytics(); }
+  if (page === "profile") loadProfile();
 }
 
 /* ═══════════════════════════════════════════
@@ -1140,7 +1552,29 @@ function buildLogForm(key) {
     </div>`;
   }).join("");
 
+  sessionRpe = 7;
   document.getElementById("log-form").innerHTML = html + `
+    <div class="log-extra-card">
+      <div class="section-label" style="margin-bottom:0">Session Notes</div>
+      <textarea id="log-notes" class="log-notes-input"
+        placeholder="How did it feel? Energy, sleep, any issues..." maxlength="120"></textarea>
+    </div>
+    <div class="log-extra-card">
+      <div class="section-label" style="margin-bottom:8px">Difficulty (RPE)</div>
+      <div class="rpe-row">
+        <div class="stepper" style="max-width:160px">
+          <button class="step-btn" onclick="doRpe(-1)">−</button>
+          <div class="step-val" id="rpe-val">7</div>
+          <button class="step-btn" onclick="doRpe(1)">+</button>
+        </div>
+        <div class="rpe-desc" id="rpe-desc">Hard</div>
+      </div>
+      <div class="rpe-scale">
+        ${Array.from({length:10},(_,i)=>
+          `<button class="rpe-dot${i+1<=7?' active':''}" onclick="setRpe(${i+1})" title="RPE ${i+1}"></button>`
+        ).join('')}
+      </div>
+    </div>
     <div class="save-btn-wrap">
       <button class="save-btn" onclick="saveSession()">
         <span class="save-icon">💾</span>
@@ -1213,6 +1647,15 @@ function toggleDone(ei, si) {
       document.getElementById("elw-" + (ei + 1))?.classList.add("open");
     }, 300);
   }
+
+  // Auto-start rest timer when set is checked off
+  if (d.done) {
+    const secs = ei < 3 ? 120 : 90; // compounds 2min, isolation 90s
+    startRestTimer(secs);
+  } else {
+    clearRestTimer();
+  }
+
   haptic();
 }
 
@@ -1237,7 +1680,9 @@ async function saveSession() {
   try {
     await apiPost("/sessions", {
       dayKey: key, dayName: plan.name, dayType: plan.type,
-      date: new Date().toISOString(), exercises
+      date: new Date().toISOString(), exercises,
+      rpe:   sessionRpe,
+      notes: document.getElementById('log-notes')?.value?.trim() || ""
     });
     toast("Session saved 💪", "ok");
     setData[key] = {};
@@ -1290,6 +1735,9 @@ async function loadHistory() {
           ).join("")}</div>
         </div>`).join("");
 
+      const rpeBadge  = s.rpe ? `<span class="hist-rpe">RPE ${s.rpe}/10</span>` : '';
+      const notesHtml = s.notes ? `<div class="hist-notes">${escapeHtml(s.notes)}</div>` : '';
+
       return `<div class="hist-card stagger-${Math.min(i+1,6)}" id="hc-${i}" style="animation-delay:${i*0.06}s">
         <div class="hist-head" onclick="document.getElementById('hc-${i}').classList.toggle('open')">
           <div class="hist-stripe" style="background:${tc}"></div>
@@ -1301,6 +1749,8 @@ async function loadHistory() {
         </div>
         <div class="hist-body">
           ${exHtml}
+          ${rpeBadge}
+          ${notesHtml}
           <button class="hist-del" onclick="deleteSession('${sessionId}',${i},event)">🗑 Delete Session</button>
         </div>
       </div>`;
@@ -1432,12 +1882,335 @@ function escapeJsString(value) {
 }
 
 /* ═══════════════════════════════════════════
+   ONBOARDING
+═══════════════════════════════════════════ */
+async function checkOnboarding() {
+  try {
+    const resp = await fetch(API_BASE + '/profile', { headers: H });
+    if (resp.status === 404) showOnboarding();
+  } catch { /* offline — skip onboarding */ }
+}
+
+function showOnboarding() {
+  document.getElementById('onboarding').style.display = 'flex';
+  obShowStep(1);
+}
+
+function obShowStep(n) {
+  obState.step = n;
+  document.querySelectorAll('.ob-step').forEach(s => s.classList.remove('active'));
+  const stepEl = document.querySelector(`.ob-step[data-step="${n}"]`);
+  if (stepEl) stepEl.classList.add('active');
+  const pct = ((n - 1) / (obState.totalSteps - 1)) * 100;
+  const fill = document.getElementById('ob-fill');
+  if (fill) fill.style.width = pct + '%';
+}
+
+function obSelect(btn, field) {
+  const container = btn.closest('.ob-choices');
+  container.querySelectorAll('.ob-choice').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  if (field === 'goal') obState.goal = btn.dataset.val;
+  if (field === 'experience') obState.experience = btn.dataset.val;
+  haptic();
+}
+
+function obStep(field, delta) {
+  if (field === 'days') {
+    const days = document.getElementById('ob-days-val');
+    const cur = parseInt(days.textContent);
+    const next = Math.min(7, Math.max(1, cur + delta));
+    days.textContent = next;
+  } else {
+    const mins = document.getElementById('ob-mins-val');
+    const cur = parseInt(mins.textContent);
+    const next = Math.min(180, Math.max(15, cur + delta));
+    mins.textContent = next;
+  }
+  haptic();
+}
+
+function obNext() {
+  if (obState.step < obState.totalSteps) { obShowStep(obState.step + 1); haptic(); }
+}
+
+function obBack() {
+  if (obState.step > 1) { obShowStep(obState.step - 1); haptic(); }
+}
+
+async function obFinish() {
+  const btn  = document.getElementById('ob-finish-btn');
+  const text = document.getElementById('ob-finish-text');
+  const spin = document.getElementById('ob-spin');
+  btn.disabled = true;
+  if (text) text.style.display = 'none';
+  if (spin) spin.style.display = 'inline-block';
+
+  try {
+    const days = parseInt(document.getElementById('ob-days-val')?.textContent) || 4;
+    const mins = parseInt(document.getElementById('ob-mins-val')?.textContent) || 60;
+    await fetch(API_BASE + '/profile', {
+      method: 'PUT',
+      headers: { ...H, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        goals:             obState.goal,
+        experience:        obState.experience || 'Intermediate',
+        limitations:       document.getElementById('ob-limitations')?.value?.trim() || '',
+        daysPerWeek:       days,
+        sessionLengthMins: mins
+      })
+    });
+    document.getElementById('onboarding').style.display = 'none';
+    toast('Profile created — your coach is ready 💪', 'ok');
+  } catch {
+    toast('Could not save profile — check connection', 'err');
+  } finally {
+    btn.disabled = false;
+    if (text) text.style.display = 'inline';
+    if (spin) spin.style.display = 'none';
+  }
+}
+
+/* ═══════════════════════════════════════════
+   PROFILE PAGE
+═══════════════════════════════════════════ */
+async function loadProfile() {
+  try {
+    profileData = await apiGet('/profile');
+    const goals = document.getElementById('pf-goals');
+    const lims  = document.getElementById('pf-limitations');
+    const exp   = document.getElementById('pf-experience');
+    if (goals) goals.value = profileData.goals || '';
+    if (lims)  lims.value  = profileData.limitations || '';
+    if (exp)   exp.value   = profileData.experience || 'Intermediate';
+    pfDays = profileData.daysPerWeek || 4;
+    pfMins = profileData.sessionLengthMins || 60;
+    const daysEl = document.getElementById('pf-days-val');
+    const minsEl = document.getElementById('pf-mins-val');
+    if (daysEl) daysEl.textContent = pfDays;
+    if (minsEl) minsEl.textContent = pfMins;
+    const sub = document.getElementById('profile-sub');
+    if (sub) sub.textContent = `// ${escapeHtml(profileData.experience || 'ATHLETE')} · ${pfDays}×/WK · ${pfMins}MIN`;
+  } catch (err) {
+    if (String(err.message) !== '404') console.error(err);
+  }
+  try {
+    metricsData = await apiGet('/metrics');
+    renderWeightChart();
+  } catch { /* no metrics yet */ }
+}
+
+function pfStep(field, delta) {
+  if (field === 'days') {
+    pfDays = Math.min(7, Math.max(1, pfDays + delta));
+    const el = document.getElementById('pf-days-val');
+    if (el) el.textContent = pfDays;
+  } else {
+    pfMins = Math.min(180, Math.max(15, pfMins + delta));
+    const el = document.getElementById('pf-mins-val');
+    if (el) el.textContent = pfMins;
+  }
+  haptic();
+  saveProfileField();
+}
+
+async function saveProfileField() {
+  const goals = document.getElementById('pf-goals')?.value || '';
+  const lims  = document.getElementById('pf-limitations')?.value || '';
+  const exp   = document.getElementById('pf-experience')?.value || 'Intermediate';
+  try {
+    await fetch(API_BASE + '/profile', {
+      method: 'PUT',
+      headers: { ...H, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ goals, experience: exp, limitations: lims, daysPerWeek: pfDays, sessionLengthMins: pfMins })
+    });
+  } catch { /* silently retry on next interaction */ }
+}
+
+async function logWeight() {
+  const input = document.getElementById('pf-weight-input');
+  const weight = parseFloat(input?.value);
+  if (!weight || weight < 50 || weight > 999) { toast('Enter a valid weight (50–999 lb)', 'err'); return; }
+  try {
+    await apiPost('/metrics', { weightLb: weight });
+    metricsData = await apiGet('/metrics');
+    renderWeightChart();
+    if (input) input.value = '';
+    toast(`${weight} lb logged`, 'ok');
+  } catch { toast('Could not save weight', 'err'); }
+}
+
+function renderWeightChart() {
+  const chart  = document.getElementById('weight-chart');
+  const latest = document.getElementById('weight-latest');
+  if (!chart || !metricsData.length) return;
+  const recent  = metricsData.slice(-8);
+  const weights = recent.map(d => d.weightLb);
+  const min = Math.min(...weights) - 2;
+  const max = Math.max(...weights) + 2;
+  const range = (max - min) || 1;
+  const W = 280, H = 70, pad = 10;
+  const pts = recent.map((d, i) => {
+    const x = pad + (i / Math.max(recent.length - 1, 1)) * (W - pad * 2);
+    const y = H - pad - ((d.weightLb - min) / range) * (H - pad * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  chart.innerHTML = `
+    <polyline points="${pts.join(' ')}" fill="none" stroke="var(--legs)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${recent.map((_, i) => { const [x,y]=pts[i].split(','); return `<circle cx="${x}" cy="${y}" r="3" fill="var(--legs)"/>`; }).join('')}`;
+  chart.style.display = 'block';
+  if (latest) {
+    const last = metricsData[metricsData.length - 1];
+    latest.textContent = `Latest: ${last.weightLb} lb — ${last.date}`;
+    latest.style.display = 'block';
+  }
+}
+
+/* ═══════════════════════════════════════════
+   RPE
+═══════════════════════════════════════════ */
+function doRpe(delta) {
+  sessionRpe = Math.min(10, Math.max(1, sessionRpe + delta));
+  updateRpeDisplay();
+}
+
+function setRpe(val) {
+  sessionRpe = val;
+  updateRpeDisplay();
+}
+
+function updateRpeDisplay() {
+  const el   = document.getElementById('rpe-val');
+  const desc = document.getElementById('rpe-desc');
+  if (el)   { el.textContent = sessionRpe; el.classList.add('bump'); setTimeout(() => el.classList.remove('bump'), 200); }
+  if (desc) desc.textContent = RPE_LABELS[sessionRpe] || '';
+  document.querySelectorAll('.rpe-dot').forEach((dot, i) => dot.classList.toggle('active', i + 1 <= sessionRpe));
+  haptic();
+}
+
+/* ═══════════════════════════════════════════
+   REST TIMER
+═══════════════════════════════════════════ */
+function startRestTimer(secs) {
+  clearInterval(restState.ivl);
+  Object.assign(restState, { active: true, total: secs, remaining: secs, ivl: null });
+  const el = document.getElementById('rest-timer');
+  if (el) el.style.display = 'flex';
+  updateRestDisplay();
+  restState.ivl = setInterval(() => {
+    restState.remaining--;
+    updateRestDisplay();
+    if (restState.remaining > 0 && restState.remaining % 10 === 0) haptic();
+    if (restState.remaining <= 0) { haptic(); setTimeout(haptic, 150); clearRestTimer(); }
+  }, 1000);
+}
+
+function updateRestDisplay() {
+  const m = Math.floor(restState.remaining / 60);
+  const s = restState.remaining % 60;
+  const countEl = document.getElementById('rest-count');
+  const fillEl  = document.getElementById('rest-fill');
+  if (countEl) countEl.textContent = `${m}:${String(s).padStart(2, '0')}`;
+  if (fillEl && restState.total > 0) fillEl.style.width = `${(restState.remaining / restState.total) * 100}%`;
+}
+
+function clearRestTimer() {
+  clearInterval(restState.ivl);
+  restState.active = false;
+  const el = document.getElementById('rest-timer');
+  if (el) el.style.display = 'none';
+}
+
+function skipRest() { clearRestTimer(); haptic(); }
+
+/* ═══════════════════════════════════════════
+   ANALYTICS
+═══════════════════════════════════════════ */
+async function loadAnalytics() {
+  try {
+    analyticsData = await apiGet('/analytics');
+    renderAnalytics();
+  } catch (e) { console.error('analytics:', e); }
+}
+
+function renderAnalytics() {
+  if (!analyticsData) return;
+
+  // RPE avg stat tile
+  const rpeVals = (analyticsData.rpeTrend || []).filter(w => w.avgRpe != null).map(w => w.avgRpe);
+  if (rpeVals.length) {
+    const avg = Math.round((rpeVals.reduce((a,b)=>a+b,0) / rpeVals.length) * 10) / 10;
+    const rpeEl = document.getElementById('s-rpe');
+    if (rpeEl) rpeEl.textContent = avg;
+  }
+
+  // Volume trend
+  const volSection = document.getElementById('vol-section');
+  const volChart   = document.getElementById('vol-chart');
+  if (volChart && analyticsData.weeklyVolume?.length) {
+    const weeks = analyticsData.weeklyVolume.slice(-4);
+    const maxTotal = Math.max(...weeks.map(w => w.total), 1);
+    volChart.innerHTML = weeks.map(w => {
+      const pH = Math.max(2, Math.round((w.push / maxTotal) * 100));
+      const puH = Math.max(2, Math.round((w.pull / maxTotal) * 100));
+      const lH  = Math.max(2, Math.round((w.legs / maxTotal) * 100));
+      const label = w.week.replace(/\d{4}-/, '');
+      return `<div class="vol-week">
+        <div class="vol-bars">
+          <div class="vol-bar" style="height:${pH}%;background:var(--push)" title="Push: ${w.push} sets"></div>
+          <div class="vol-bar" style="height:${puH}%;background:var(--pull)" title="Pull: ${w.pull} sets"></div>
+          <div class="vol-bar" style="height:${lH}%;background:var(--legs)" title="Legs: ${w.legs} sets"></div>
+        </div>
+        <div class="vol-week-label">${escapeHtml(label)}</div>
+      </div>`;
+    }).join('');
+    if (volSection) volSection.style.display = 'block';
+  }
+
+  // Balance bar
+  const balSection = document.getElementById('balance-section');
+  const balBar     = document.getElementById('balance-bar');
+  const balLabels  = document.getElementById('balance-labels');
+  if (balBar && analyticsData.volumeBalance) {
+    const { push, pull, legs } = analyticsData.volumeBalance;
+    if (push + pull + legs > 0) {
+      balBar.innerHTML = `
+        <div class="balance-seg" style="width:${push}%;background:var(--push)"></div>
+        <div class="balance-seg" style="width:${pull}%;background:var(--pull)"></div>
+        <div class="balance-seg" style="width:${legs}%;background:var(--legs)"></div>`;
+      if (balLabels) balLabels.innerHTML = `
+        <span style="color:var(--push)">${push}% PUSH</span>
+        <span style="color:var(--pull)">${pull}% PULL</span>
+        <span style="color:var(--legs)">${legs}% LEGS</span>`;
+      if (balSection) balSection.style.display = 'block';
+    }
+  }
+
+  // Plateau alerts
+  const platSection = document.getElementById('plateau-section');
+  const platList    = document.getElementById('plateau-list');
+  if (platList && analyticsData.plateaus?.length) {
+    platList.innerHTML = analyticsData.plateaus.map(p =>
+      `<div class="plateau-item">
+        <div class="plateau-name">${escapeHtml(p.exercise)}</div>
+        <div class="plateau-detail">Stuck at ${p.stuckAt} lb for ${p.sessionsStuck} sessions</div>
+      </div>`
+    ).join('');
+    if (platSection) platSection.style.display = 'block';
+  }
+}
+
+/* ═══════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════ */
-setTimeout(() => {
+setTimeout(async () => {
   document.getElementById("splash").classList.add("gone");
   renderPlan();
   initLogPage();
+  await checkOnboarding();
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
 }, 1500);
 </script>
 </body>

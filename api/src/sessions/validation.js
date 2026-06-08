@@ -88,6 +88,17 @@ function validateSessionPayload(body) {
     return { ok: false, errors };
   }
 
+  if (body.rpe !== undefined) {
+    const rpe = Number(body.rpe);
+    if (!Number.isInteger(rpe) || rpe < 1 || rpe > 10) {
+      errors.push("rpe must be an integer between 1 and 10");
+    }
+  }
+
+  if (errors.length) {
+    return { ok: false, errors };
+  }
+
   return {
     ok: true,
     value: {
@@ -96,6 +107,7 @@ function validateSessionPayload(body) {
       dayType: body.dayType || "",
       date: body.date || new Date().toISOString(),
       notes: cleanText(body.notes || ""),
+      rpe: body.rpe ? Number(body.rpe) : 0,
       exercises
     }
   };

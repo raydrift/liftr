@@ -3,9 +3,12 @@
 const express = require('express');
 const path = require('path');
 
-const sessionsHandler = require('./src/sessions/index');
-const sessionHandler = require('./src/session/index');
-const statsHandler = require('./src/stats/index');
+const sessionsHandler  = require('./src/sessions/index');
+const sessionHandler   = require('./src/session/index');
+const statsHandler     = require('./src/stats/index');
+const profileHandler   = require('./src/profile/index');
+const analyticsHandler = require('./src/analytics/index');
+const metricsHandler   = require('./src/metrics/index');
 
 const app = express();
 
@@ -22,9 +25,12 @@ function adapt(handler) {
   };
 }
 
-app.all('/api/sessions', adapt(sessionsHandler));
+app.all('/api/sessions',  adapt(sessionsHandler));
 app.all('/api/session/:id', adapt(sessionHandler));
-app.all('/api/stats', adapt(statsHandler));
+app.all('/api/stats',     adapt(statsHandler));
+app.all('/api/profile',   adapt(profileHandler));
+app.all('/api/analytics', adapt(analyticsHandler));
+app.all('/api/metrics',   adapt(metricsHandler));
 
 // Serve frontend for all non-API routes
 app.get('*', (_req, res) => {

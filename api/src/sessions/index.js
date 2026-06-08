@@ -48,7 +48,8 @@ async function getSessions(context) {
         dayKey: entity.dayKey,
         dayName: entity.dayName,
         dayType: entity.dayType,
-        notes: entity.notes || ""
+        notes: entity.notes || "",
+        rpe: entity.rpe || 0
       });
     }
 
@@ -102,7 +103,8 @@ async function postSession(context, req) {
       dayKey: body.dayKey,
       dayName: body.dayName || "",
       dayType: body.dayType || "",
-      notes: body.notes || ""
+      notes: body.notes || "",
+      rpe: body.rpe || 0
     });
 
     // Save each exercise as a separate entity (allows future querying per exercise)

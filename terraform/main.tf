@@ -38,6 +38,16 @@ resource "azurerm_storage_table" "exercises" {
   storage_account_name = azurerm_storage_account.main.name
 }
 
+resource "azurerm_storage_table" "profile" {
+  name                 = "userprofile"
+  storage_account_name = azurerm_storage_account.main.name
+}
+
+resource "azurerm_storage_table" "metrics" {
+  name                 = "bodymetrics"
+  storage_account_name = azurerm_storage_account.main.name
+}
+
 # ─────────────────────────────────────────
 # Container Registry — stores Docker images
 # ─────────────────────────────────────────
@@ -123,6 +133,16 @@ resource "azurerm_container_app" "main" {
       env {
         name  = "PORT"
         value = "3000"
+      }
+
+      env {
+        name  = "PROFILE_TABLE_NAME"
+        value = azurerm_storage_table.profile.name
+      }
+
+      env {
+        name  = "METRICS_TABLE_NAME"
+        value = azurerm_storage_table.metrics.name
       }
     }
   }
