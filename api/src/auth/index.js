@@ -2,7 +2,7 @@
 // Authentication endpoints: login, register, logout, me
 
 const bcrypt = require("bcrypt");
-const { getUsersTable, getAuditTable, signJWT, verifyJWT, jsonResponse } = require("../shared/tableClient");
+const { getUsersTable, getAuditTable, signJWT, verifyJWT, getCookie, jsonResponse } = require("../shared/tableClient");
 
 module.exports = async function (context, req) {
   const path = req.path || req.url;
@@ -218,7 +218,7 @@ async function logout(context, req) {
 // GET /api/auth/me
 // ─────────────────────────────────────────
 async function getMe(context, req) {
-  const token = req.cookies?.session;
+  const token = getCookie(req, "session");
   if (!token) {
     context.res = jsonResponse(401, { error: "Not authenticated" });
     return;

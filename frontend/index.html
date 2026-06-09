@@ -1653,9 +1653,45 @@ const RPE_LABELS  = { 1:"Very Easy",2:"Easy",3:"Easy",4:"Moderate",5:"Moderate",
    API (Session-based — no API key)
 ═══════════════════════════════════════════ */
 const H = { "Content-Type": "application/json" };
-async function apiGet(p)       { const r = await fetch(API_BASE+p,{headers:H,credentials:"include"}); if(!r.ok) throw Error(r.status); return r.json(); }
-async function apiPost(p,b)    { const r = await fetch(API_BASE+p,{method:"POST",headers:H,credentials:"include",body:JSON.stringify(b)}); if(!r.ok) throw Error(r.status); return r.json(); }
-async function apiDelete(p)    { const r = await fetch(API_BASE+p,{method:"DELETE",headers:H,credentials:"include"}); if(!r.ok) throw Error(r.status); return r.json(); }
+
+function makeApiError(message, status, payload) {
+  const err = new Error(message || "Request failed");
+  err.status = status;
+  if (payload && typeof payload === "object") {
+    err.code = payload.code;
+    err.detail = payload.detail;
+    err.payload = payload;
+  }
+  return err;
+}
+
+async function apiRequest(path, options) {
+  let resp;
+  try {
+    resp = await fetch(API_BASE + path, options);
+  } catch (_err) {
+    const e = makeApiError("Network error. Check your connection.", 0);
+    e.isNetwork = true;
+    throw e;
+  }
+
+  const ct = resp.headers.get("content-type") || "";
+  let data = null;
+  if (ct.includes("application/json")) {
+    data = await resp.json().catch(() => null);
+  }
+
+  if (!resp.ok) {
+    throw makeApiError(data?.error || `Request failed (${resp.status})`, resp.status, data);
+  }
+
+  if (data !== null) return data;
+  return resp.text();
+}
+
+async function apiGet(p)       { return apiRequest(p, { headers: H, credentials: "include" }); }
+async function apiPost(p, b)   { return apiRequest(p, { method: "POST", headers: H, credentials: "include", body: JSON.stringify(b) }); }
+async function apiDelete(p)    { return apiRequest(p, { method: "DELETE", headers: H, credentials: "include" }); }
 
 /* ═══════════════════════════════════════════
    AUTH FUNCTIONS
@@ -2064,7 +2100,13 @@ async function saveSession() {
     renderDayGrid();
     document.getElementById("log-form").innerHTML = "";
   } catch (e) {
-    toast("Save failed — check connection", "err");
+    if (e.status === 401) {
+      toast("Sign in required", "err");
+      document.getElementById("auth-overlay").classList.remove("hidden");
+      switchAuthMode("login");
+    } else {
+      toast(e.message || "Save failed", "err");
+    }
     console.error(e);
   } finally {
     btn.disabled = false;
@@ -2131,7 +2173,15 @@ async function loadHistory() {
     }).join("");
   } catch (e) {
     sub.textContent = "// ERROR";
-    list.innerHTML = `<div class="hist-empty"><div class="hist-empty-icon">⚠️</div><div class="hist-empty-text">COULD NOT LOAD\nCheck your connection.</div></div>`;
+    if (e.status === 401) {
+      list.innerHTML = `<div class="hist-empty"><div class="hist-empty-icon">🔒</div><div class="hist-empty-text">SIGN IN REQUIRED</div></div>`;
+      document.getElementById("auth-overlay").classList.remove("hidden");
+      switchAuthMode("login");
+    } else if (e.isNetwork) {
+      list.innerHTML = `<div class="hist-empty"><div class="hist-empty-icon">🔌</div><div class="hist-empty-text">COULD NOT REACH API\nCheck connection.</div></div>`;
+    } else {
+      list.innerHTML = `<div class="hist-empty"><div class="hist-empty-icon">⚠️</div><div class="hist-empty-text">SERVER ERROR\nTry again.</div></div>`;
+    }
     console.error(e);
   }
 }
@@ -2143,7 +2193,7 @@ async function deleteSession(id, i, ev) {
     await apiDelete(`/session/${id}`);
     toast("Deleted", "ok");
     loadHistory();
-  } catch (e) { toast("Delete failed", "err"); }
+  } catch (e) { toast(e.message || "Delete failed", "err"); }
 }
 
 async function exportSessions() {
