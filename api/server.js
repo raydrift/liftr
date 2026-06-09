@@ -99,7 +99,7 @@ function adapt(handler) {
   };
 }
 
-app.all('/api/auth',      adapt(authHandler));
+app.all('/api/auth*',      adapt(authHandler));
 app.all('/api/sessions',  adapt(sessionsHandler));
 app.all('/api/session/:id', adapt(sessionHandler));
 app.all('/api/stats',     adapt(statsHandler));
