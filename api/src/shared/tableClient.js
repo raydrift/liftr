@@ -1,34 +1,54 @@
 // src/shared/tableClient.js
 const { TableClient } = require("@azure/data-tables");
 
-const connStr = process.env.STORAGE_CONNECTION_STRING;
+function getStorageConnectionString() {
+  return (
+    process.env.STORAGE_CONNECTION_STRING ||
+    process.env.AZURE_STORAGE_CONNECTION_STRING ||
+    process.env.AzureWebJobsStorage ||
+    ""
+  );
+}
+
+function requireEnv(name) {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing required env var: ${name}`);
+  return value;
+}
+
+function getTable(tableNameEnvVar) {
+  const connStr = getStorageConnectionString();
+  if (!connStr) throw new Error("Storage connection not configured (missing connection string)");
+  const tableName = requireEnv(tableNameEnvVar);
+  return TableClient.fromConnectionString(connStr, tableName);
+}
 
 function getSessionsTable() {
-  return TableClient.fromConnectionString(connStr, process.env.SESSIONS_TABLE_NAME);
+  return getTable("SESSIONS_TABLE_NAME");
 }
 
 function getExercisesTable() {
-  return TableClient.fromConnectionString(connStr, process.env.EXERCISES_TABLE_NAME);
+  return getTable("EXERCISES_TABLE_NAME");
 }
 
 function getProfileTable() {
-  return TableClient.fromConnectionString(connStr, process.env.PROFILE_TABLE_NAME);
+  return getTable("PROFILE_TABLE_NAME");
 }
 
 function getMetricsTable() {
-  return TableClient.fromConnectionString(connStr, process.env.METRICS_TABLE_NAME);
+  return getTable("METRICS_TABLE_NAME");
 }
 
 function getPlanTable() {
-  return TableClient.fromConnectionString(connStr, process.env.PLAN_TABLE_NAME);
+  return getTable("PLAN_TABLE_NAME");
 }
 
 function getUsersTable() {
-  return TableClient.fromConnectionString(connStr, process.env.USERS_TABLE_NAME);
+  return getTable("USERS_TABLE_NAME");
 }
 
 function getAuditTable() {
-  return TableClient.fromConnectionString(connStr, process.env.AUDIT_TABLE_NAME);
+  return getTable("AUDIT_TABLE_NAME");
 }
 
 // JWT auth — session-based protection
@@ -46,9 +66,28 @@ function signJWT(payload, expiresIn = "30d") {
   return jwt.sign(payload, process.env.JWT_SECRET || "", { expiresIn });
 }
 
+function getCookie(req, name) {
+  if (req?.cookies && typeof req.cookies === "object" && req.cookies[name]) return req.cookies[name];
+
+  const header = req?.headers?.cookie;
+  if (!header || typeof header !== "string") return null;
+
+  // Cookie header: "a=1; b=2"
+  const cookies = header.split(";").map((p) => p.trim());
+  for (const pair of cookies) {
+    if (!pair) continue;
+    const eq = pair.indexOf("=");
+    if (eq === -1) continue;
+    const key = pair.slice(0, eq).trim();
+    if (key !== name) continue;
+    return decodeURIComponent(pair.slice(eq + 1));
+  }
+  return null;
+}
+
 async function authenticateUser(req) {
   // Check JWT in cookies first (new session-based auth)
-  const token = req.cookies?.session;
+  const token = getCookie(req, "session");
   if (token) {
     const payload = verifyJWT(token);
     if (payload) {
@@ -107,6 +146,7 @@ module.exports = {
   authenticateUser,
   verifyJWT,
   signJWT,
+  getCookie,
   unauthorizedResponse,
   jsonResponse
 };
