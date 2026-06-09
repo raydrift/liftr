@@ -99,14 +99,14 @@ function adapt(handler) {
   };
 }
 
-app.all('/api/auth',      adapt(authHandler));
+app.all('/api/auth*',     adapt(authHandler));
 app.all('/api/sessions',  adapt(sessionsHandler));
 app.all('/api/session/:id', adapt(sessionHandler));
 app.all('/api/stats',     adapt(statsHandler));
 app.all('/api/profile',   adapt(profileHandler));
 app.all('/api/analytics', adapt(analyticsHandler));
 app.all('/api/assess',    adapt(assessHandler));
-app.all('/api/plan',      adapt(planHandler));
+app.all('/api/plan*',     adapt(planHandler));
 app.all('/api/metrics',   adapt(metricsHandler));
 
 // Serve frontend for all non-API routes
