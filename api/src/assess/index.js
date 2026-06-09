@@ -152,10 +152,13 @@ Keep response under 500 words. Be direct and actionable.`;
 
     // Stream chunks as SSE events
     let response = "";
-    for await (const chunk of stream.textStream) {
-      response += chunk;
-      // Write SSE event directly to response
-      context.res.body += `data: ${chunk}\n\n`;
+    for await (const event of stream) {
+      if (event.type === 'content_block_delta' && event.delta?.text) {
+        const text = event.delta.text;
+        response += text;
+        // Write SSE event directly to response
+        context.res.body += `data: ${text}\n\n`;
+      }
     }
 
     context.log.info("assess: streaming complete", { length: response.length });

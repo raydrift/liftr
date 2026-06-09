@@ -19,6 +19,10 @@ function getMetricsTable() {
   return TableClient.fromConnectionString(connStr, process.env.METRICS_TABLE_NAME);
 }
 
+function getPlanTable() {
+  return TableClient.fromConnectionString(connStr, process.env.PLAN_TABLE_NAME);
+}
+
 // Simple API key auth — single-user protection
 function authenticate(req) {
   const key = req.headers["x-api-key"];
@@ -43,4 +47,4 @@ function jsonResponse(status, body) {
   };
 }
 
-module.exports = { getSessionsTable, getExercisesTable, getProfileTable, getMetricsTable, authenticate, unauthorizedResponse, jsonResponse };
+module.exports = { getSessionsTable, getExercisesTable, getProfileTable, getMetricsTable, getPlanTable, authenticate, unauthorizedResponse, jsonResponse };

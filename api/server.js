@@ -9,6 +9,7 @@ const statsHandler     = require('./src/stats/index');
 const profileHandler   = require('./src/profile/index');
 const analyticsHandler = require('./src/analytics/index');
 const assessHandler    = require('./src/assess/index');
+const planHandler      = require('./src/plan/index');
 const metricsHandler   = require('./src/metrics/index');
 
 const app = express();
@@ -32,6 +33,7 @@ app.all('/api/stats',     adapt(statsHandler));
 app.all('/api/profile',   adapt(profileHandler));
 app.all('/api/analytics', adapt(analyticsHandler));
 app.all('/api/assess',    adapt(assessHandler));
+app.all('/api/plan',      adapt(planHandler));
 app.all('/api/metrics',   adapt(metricsHandler));
 
 // Serve frontend for all non-API routes

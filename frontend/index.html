@@ -1189,6 +1189,11 @@ body::before {
       <span style="font-size:18px">→</span>
     </button>
     <div class="ai-output" id="ai-out" style="display:none"></div>
+    <button class="run-assess-btn" id="gen-plan-btn" onclick="generatePlan()" style="margin-top:16px;">
+      <span>Generate New Plan</span>
+      <span style="font-size:18px">✨</span>
+    </button>
+    <span id="gen-status" style="display:none; margin-left:1rem; font-size:12px; color:var(--ink2);"></span>
   </div>
 </div>
 
@@ -1304,7 +1309,7 @@ const API_KEY  = window.LIFTR_CONFIG?.API_KEY  || window.ENV_API_KEY  || "";
 /* ═══════════════════════════════════════════
    WORKOUT DATA
 ═══════════════════════════════════════════ */
-const PLANS = {
+let PLANS = {
   push1: {
     name:"Push Day 1", sub:"Chest Focus", type:"PUSH", c:"push",
     exercises:[
@@ -1362,7 +1367,7 @@ const PLANS = {
   }
 };
 
-const PKEYS = Object.keys(PLANS);
+let PKEYS = Object.keys(PLANS);
 const COLOR = { push:"var(--push)", pull:"var(--pull)", legs:"var(--legs)" };
 const GLOW  = { push:"var(--glow-push)", pull:"var(--glow-pull)", legs:"var(--glow-legs)" };
 
@@ -1885,6 +1890,99 @@ async function runAssessment() {
   }
 }
 
+async function loadPlan() {
+  try {
+    const resp = await fetch(API_BASE + "/plan", {
+      method: "GET",
+      headers: H
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.plan) {
+        PLANS = data.plan;
+        PKEYS = Object.keys(data.plan);
+        console.log("Loaded dynamic plan, version:", data.version);
+      }
+    }
+  } catch (err) {
+    console.error("Failed to load plan:", err);
+  }
+}
+
+async function generatePlan() {
+  const btn = document.getElementById("gen-plan-btn");
+  const status = document.getElementById("gen-status");
+
+  if (!statsData || statsData.totalSessions < 1) {
+    toast("Log some sessions first", "err");
+    return;
+  }
+
+  btn.disabled = true;
+  status.style.display = "inline";
+  status.textContent = "Generating plan...";
+
+  try {
+    const resp = await fetch(API_BASE + "/plan/generate", {
+      method: "POST",
+      headers: H
+    });
+
+    if (!resp.ok) {
+      status.textContent = "❌ Error generating plan";
+      btn.disabled = false;
+      return;
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let generatedPlan = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          try {
+            const event = JSON.parse(line.slice(6));
+            if (event.type === "status") {
+              status.textContent = event.text;
+            } else if (event.type === "plan") {
+              generatedPlan = event.json;
+              status.textContent = "✓ Plan generated! Loading...";
+            } else if (event.type === "error") {
+              status.textContent = "❌ " + event.text;
+            }
+          } catch (e) {
+            console.error("Parse error:", e);
+          }
+        }
+      }
+    }
+
+    if (generatedPlan) {
+      PLANS = generatedPlan;
+      PKEYS = Object.keys(generatedPlan);
+      renderPlan();
+      document.querySelector(".nav-btn[onclick*='assess']").click();
+      toast("New plan generated!", "success");
+    } else {
+      status.textContent = "❌ No plan received";
+    }
+  } catch (err) {
+    console.error(err);
+    status.textContent = "❌ " + err.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 /* ═══════════════════════════════════════════
    UTILS
 ═══════════════════════════════════════════ */
@@ -2247,6 +2345,7 @@ function renderAnalytics() {
 ═══════════════════════════════════════════ */
 setTimeout(async () => {
   document.getElementById("splash").classList.add("gone");
+  await loadPlan();  // Load dynamic plan (or fallback to hardcoded PLANS)
   renderPlan();
   initLogPage();
   await checkOnboarding();

@@ -4,7 +4,7 @@
   "description": "Workout tracker API — Express on Azure App Service",
   "scripts": {
     "start": "node server.js",
-    "build": "node --check src/shared/tableClient.js && node --check src/sessions/index.js && node --check src/sessions/validation.js && node --check src/session/index.js && node --check src/stats/index.js && node --check src/profile/index.js && node --check src/analytics/index.js && node --check src/assess/index.js && node --check src/metrics/index.js && node --check server.js",
+    "build": "node --check src/shared/tableClient.js && node --check src/sessions/index.js && node --check src/sessions/validation.js && node --check src/session/index.js && node --check src/stats/index.js && node --check src/profile/index.js && node --check src/analytics/index.js && node --check src/assess/index.js && node --check src/plan/index.js && node --check src/metrics/index.js && node --check server.js",
     "test": "node --test test/*.test.js"
   },
   "dependencies": {

@@ -134,6 +134,7 @@ jobs:
             -target=azurerm_storage_account.main \
             -target=azurerm_storage_table.sessions \
             -target=azurerm_storage_table.exercises \
+            -target=azurerm_storage_table.plan \
             -target=azurerm_user_assigned_identity.app \
             -target=azurerm_role_assignment.app_kv_access \
             -target=azurerm_container_registry.main

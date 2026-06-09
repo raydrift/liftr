@@ -48,6 +48,11 @@ resource "azurerm_storage_table" "metrics" {
   storage_account_name = azurerm_storage_account.main.name
 }
 
+resource "azurerm_storage_table" "plan" {
+  name                 = "workoutplan"
+  storage_account_name = azurerm_storage_account.main.name
+}
+
 # ─────────────────────────────────────────
 # Container Registry — stores Docker images
 # ─────────────────────────────────────────
@@ -188,6 +193,11 @@ resource "azurerm_container_app" "main" {
       env {
         name  = "METRICS_TABLE_NAME"
         value = azurerm_storage_table.metrics.name
+      }
+
+      env {
+        name  = "PLAN_TABLE_NAME"
+        value = azurerm_storage_table.plan.name
       }
 
       env {
