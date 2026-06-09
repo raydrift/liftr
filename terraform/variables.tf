@@ -33,9 +33,10 @@ variable "api_secret_key" {
 }
 
 variable "jwt_secret" {
-  description = "Secret key for signing JWT session tokens"
+  description = "Secret key for signing JWT session tokens (if not provided, a random one will be generated)"
   type        = string
   sensitive   = true
+  default     = null
 }
 
 variable "key_vault_name" {

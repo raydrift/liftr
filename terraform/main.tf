@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 3.100"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1"
+    }
   }
 
   backend "azurerm" {}
@@ -111,6 +115,14 @@ resource "azurerm_role_assignment" "app_kv_access" {
 }
 
 # ─────────────────────────────────────────
+# JWT Secret — fallback if not provided via variable
+# ─────────────────────────────────────────
+resource "random_password" "jwt_secret" {
+  length  = 64
+  special = true
+}
+
+# ─────────────────────────────────────────
 # Container Apps — serverless hosting
 # No VM quota required (Consumption plan)
 # ─────────────────────────────────────────
@@ -162,7 +174,7 @@ resource "azurerm_container_app" "main" {
 
   secret {
     name  = "jwt-secret"
-    value = var.jwt_secret
+    value = coalesce(var.jwt_secret, random_password.jwt_secret.result)
   }
 
   template {
