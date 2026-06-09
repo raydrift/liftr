@@ -27,7 +27,7 @@ terraform/*.tfstate.*
 terraform/crash.log
 terraform/crash.*.log
 terraform/*tfplan*
-
+terraform/.terraform.lock.hcl
 # Editors
 .vscode/
 .idea/
