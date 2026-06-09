@@ -53,6 +53,16 @@ resource "azurerm_storage_table" "plan" {
   storage_account_name = azurerm_storage_account.main.name
 }
 
+resource "azurerm_storage_table" "users" {
+  name                 = "users"
+  storage_account_name = azurerm_storage_account.main.name
+}
+
+resource "azurerm_storage_table" "audit" {
+  name                 = "audit"
+  storage_account_name = azurerm_storage_account.main.name
+}
+
 # ─────────────────────────────────────────
 # Container Registry — stores Docker images
 # ─────────────────────────────────────────
@@ -150,6 +160,11 @@ resource "azurerm_container_app" "main" {
     identity            = azurerm_user_assigned_identity.app.id
   }
 
+  secret {
+    name  = "jwt-secret"
+    value = var.jwt_secret
+  }
+
   template {
     min_replicas = 0
     max_replicas = 1
@@ -201,8 +216,33 @@ resource "azurerm_container_app" "main" {
       }
 
       env {
+        name  = "USERS_TABLE_NAME"
+        value = azurerm_storage_table.users.name
+      }
+
+      env {
+        name  = "AUDIT_TABLE_NAME"
+        value = azurerm_storage_table.audit.name
+      }
+
+      env {
         name        = "ANTHROPIC_API_KEY"
         secret_name = "anthropic-api-key"
+      }
+
+      env {
+        name        = "JWT_SECRET"
+        secret_name = "jwt-secret"
+      }
+
+      env {
+        name  = "ALLOWED_ORIGIN"
+        value = "https://hesyc.com"
+      }
+
+      env {
+        name  = "SESSION_MAX_AGE"
+        value = "2592000"
       }
     }
   }

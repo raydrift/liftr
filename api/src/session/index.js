@@ -1,9 +1,7 @@
 // src/session/index.js
 // DELETE /api/session/{id} — delete a session and its exercises
 
-const { getSessionsTable, getExercisesTable, authenticate, unauthorizedResponse, jsonResponse } = require("../shared/tableClient");
-
-const PARTITION_KEY = "rohit";
+const { getSessionsTable, getExercisesTable, authenticateUser, unauthorizedResponse, jsonResponse } = require("../shared/tableClient");
 
 module.exports = async function (context, req) {
   if (req.method === "OPTIONS") {
@@ -11,7 +9,8 @@ module.exports = async function (context, req) {
     return;
   }
 
-  if (!authenticate(req)) {
+  const user = await authenticateUser(req);
+  if (!user) {
     context.res = unauthorizedResponse();
     return;
   }
@@ -27,7 +26,7 @@ module.exports = async function (context, req) {
     const exercisesTable = getExercisesTable();
 
     // Delete session entity
-    await sessionsTable.deleteEntity(PARTITION_KEY, sessionId);
+    await sessionsTable.deleteEntity(user.userId, sessionId);
 
     // Delete all exercise entities for this session
     const exEntities = exercisesTable.listEntities({

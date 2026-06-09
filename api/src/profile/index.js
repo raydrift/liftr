@@ -2,9 +2,8 @@
 // GET /api/profile  — retrieve user profile (404 if not yet created)
 // PUT /api/profile  — create or update user profile
 
-const { getProfileTable, authenticate, unauthorizedResponse, jsonResponse } = require("../shared/tableClient");
+const { getProfileTable, authenticateUser, unauthorizedResponse, jsonResponse } = require("../shared/tableClient");
 
-const PARTITION_KEY = "rohit";
 const ROW_KEY = "profile";
 const VALID_EXPERIENCE = new Set(["Beginner", "Intermediate", "Advanced"]);
 
@@ -14,26 +13,27 @@ module.exports = async function (context, req) {
     return;
   }
 
-  if (!authenticate(req)) {
+  const user = await authenticateUser(req);
+  if (!user) {
     context.res = unauthorizedResponse();
     return;
   }
 
   if (req.method === "GET") {
-    return await getProfile(context);
+    return await getProfile(context, user);
   }
 
   if (req.method === "PUT") {
-    return await putProfile(context, req);
+    return await putProfile(context, req, user);
   }
 
   context.res = jsonResponse(405, { error: "Method not allowed" });
 };
 
-async function getProfile(context) {
+async function getProfile(context, user) {
   try {
     const table = getProfileTable();
-    const entity = await table.getEntity(PARTITION_KEY, ROW_KEY);
+    const entity = await table.getEntity(user.userId, ROW_KEY);
     context.res = jsonResponse(200, {
       goals:             entity.goals || "",
       experience:        entity.experience || "",
@@ -52,7 +52,7 @@ async function getProfile(context) {
   }
 }
 
-async function putProfile(context, req) {
+async function putProfile(context, req, user) {
   const errors = validateProfile(req.body);
   if (errors.length) {
     context.res = jsonResponse(400, { error: "Validation failed", details: errors });
@@ -63,7 +63,7 @@ async function putProfile(context, req) {
     const body = req.body;
     const table = getProfileTable();
     await table.upsertEntity({
-      partitionKey:      PARTITION_KEY,
+      partitionKey:      user.userId,
       rowKey:            ROW_KEY,
       goals:             (body.goals || "").trim().slice(0, 500),
       experience:        body.experience,

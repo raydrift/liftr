@@ -19,6 +19,7 @@ env:
   TF_VAR_app_name: ${{ vars.APP_NAME }}
   TF_VAR_storage_account_name: ${{ vars.STORAGE_ACCOUNT_NAME }}
   TF_VAR_api_secret_key: ${{ secrets.API_SECRET_KEY }}
+  TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
   TF_VAR_key_vault_name: ${{ vars.KEY_VAULT_NAME }}
   TF_VAR_key_vault_resource_group: ${{ vars.KEY_VAULT_RESOURCE_GROUP }}
   TF_VAR_container_image_tag: ${{ github.sha }}
@@ -135,6 +136,8 @@ jobs:
             -target=azurerm_storage_table.sessions \
             -target=azurerm_storage_table.exercises \
             -target=azurerm_storage_table.plan \
+            -target=azurerm_storage_table.users \
+            -target=azurerm_storage_table.audit \
             -target=azurerm_user_assigned_identity.app \
             -target=azurerm_role_assignment.app_kv_access \
             -target=azurerm_container_registry.main

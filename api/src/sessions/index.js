@@ -2,10 +2,8 @@
 // GET  /api/sessions  — list all workout sessions
 // POST /api/sessions  — save a new session
 
-const { getSessionsTable, getExercisesTable, authenticate, unauthorizedResponse, jsonResponse } = require("../shared/tableClient");
+const { getSessionsTable, getExercisesTable, authenticateUser, unauthorizedResponse, jsonResponse } = require("../shared/tableClient");
 const { sanitizeRowKey, validateSessionPayload } = require("./validation");
-
-const PARTITION_KEY = "rohit"; // Single-user, fixed partition
 
 module.exports = async function (context, req) {
   // CORS preflight
@@ -14,23 +12,24 @@ module.exports = async function (context, req) {
     return;
   }
 
-  if (!authenticate(req)) {
+  const user = await authenticateUser(req);
+  if (!user) {
     context.res = unauthorizedResponse();
     return;
   }
 
   if (req.method === "GET") {
-    return await getSessions(context);
+    return await getSessions(context, user);
   }
 
   if (req.method === "POST") {
-    return await postSession(context, req);
+    return await postSession(context, req, user);
   }
 
   context.res = jsonResponse(405, { error: "Method not allowed" });
 };
 
-async function getSessions(context) {
+async function getSessions(context, user) {
   try {
     const sessionsTable = getSessionsTable();
     const exercisesTable = getExercisesTable();
@@ -38,7 +37,7 @@ async function getSessions(context) {
     // Get all sessions for this user
     const sessions = [];
     const sessionEntities = sessionsTable.listEntities({
-      queryOptions: { filter: `PartitionKey eq '${PARTITION_KEY}'` }
+      queryOptions: { filter: `PartitionKey eq '${user.userId}'` }
     });
 
     for await (const entity of sessionEntities) {
@@ -81,7 +80,7 @@ async function getSessions(context) {
   }
 }
 
-async function postSession(context, req) {
+async function postSession(context, req, user) {
   try {
     const validation = validateSessionPayload(req.body);
 
@@ -97,7 +96,7 @@ async function postSession(context, req) {
 
     // Save session entity
     await sessionsTable.createEntity({
-      partitionKey: PARTITION_KEY,
+      partitionKey: user.userId,
       rowKey: sessionId,
       date: body.date || new Date().toISOString(),
       dayKey: body.dayKey,

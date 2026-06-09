@@ -4,10 +4,9 @@
 // POST /api/plan/generate — generate new plan via Claude (streaming SSE)
 
 const Anthropic = require("@anthropic-ai/sdk");
-const { getPlanTable, getSessionsTable, getExercisesTable, getProfileTable, authenticate, unauthorizedResponse, jsonResponse } = require("../shared/tableClient");
+const { getPlanTable, getSessionsTable, getExercisesTable, getProfileTable, authenticateUser, unauthorizedResponse, jsonResponse } = require("../shared/tableClient");
 const { computeWeeklyVolume, computeVolumeBalance, computeStrengthCurves, detectPlateaus, computeProgressionRate, computeRpeTrend, getISOWeek } = require("../analytics/index");
 
-const PARTITION_KEY = "rohit";
 const CURRENT_ROW_KEY = "current";
 const client = new Anthropic();
 
@@ -17,21 +16,22 @@ module.exports = async function (context, req) {
     return;
   }
 
-  if (!authenticate(req)) {
+  const user = await authenticateUser(req);
+  if (!user) {
     context.res = unauthorizedResponse();
     return;
   }
 
   if (req.method === "GET") {
-    return await getPlan(context);
+    return await getPlan(context, user);
   }
 
   if (req.method === "PUT") {
-    return await putPlan(context, req);
+    return await putPlan(context, req, user);
   }
 
   if (req.method === "POST") {
-    return await postPlanGenerate(context, req);
+    return await postPlanGenerate(context, req, user);
   }
 
   context.res = jsonResponse(405, { error: "Method not allowed" });
@@ -40,10 +40,10 @@ module.exports = async function (context, req) {
 // ─────────────────────────────────────────
 // GET /api/plan — fetch current plan
 // ─────────────────────────────────────────
-async function getPlan(context) {
+async function getPlan(context, user) {
   try {
     const table = getPlanTable();
-    const entity = await table.getEntity(PARTITION_KEY, CURRENT_ROW_KEY);
+    const entity = await table.getEntity(user.userId, CURRENT_ROW_KEY);
     const plan = JSON.parse(entity.plansJson);
     context.res = jsonResponse(200, {
       plan,
@@ -64,7 +64,7 @@ async function getPlan(context) {
 // ─────────────────────────────────────────
 // PUT /api/plan — update plan
 // ─────────────────────────────────────────
-async function putPlan(context, req) {
+async function putPlan(context, req, user) {
   try {
     const { plan, notes } = req.body;
     const errors = validatePlan(plan);
@@ -79,7 +79,7 @@ async function putPlan(context, req) {
     let version = 1;
     let previousVersionKey = null;
     try {
-      const current = await table.getEntity(PARTITION_KEY, CURRENT_ROW_KEY);
+      const current = await table.getEntity(user.userId, CURRENT_ROW_KEY);
       version = (current.version || 1) + 1;
       previousVersionKey = CURRENT_ROW_KEY;
     } catch (e) {
@@ -88,7 +88,7 @@ async function putPlan(context, req) {
 
     // Upsert current plan
     await table.upsertEntity({
-      partitionKey: PARTITION_KEY,
+      partitionKey: user.userId,
       rowKey: CURRENT_ROW_KEY,
       plansJson: JSON.stringify(plan),
       generatedAt: new Date().toISOString(),
@@ -107,13 +107,13 @@ async function putPlan(context, req) {
 // ─────────────────────────────────────────
 // POST /api/plan/generate — generate via Claude (streaming)
 // ─────────────────────────────────────────
-async function postPlanGenerate(context, req) {
+async function postPlanGenerate(context, req, user) {
   try {
     // Fetch profile
     const profileTable = getProfileTable();
     let profile = null;
     try {
-      profile = await profileTable.getEntity(PARTITION_KEY, "profile");
+      profile = await profileTable.getEntity(user.userId, "profile");
     } catch (err) {
       profile = { goals: "", experience: "Beginner", limitations: "", daysPerWeek: 4, sessionLengthMins: 60 };
     }
@@ -122,7 +122,7 @@ async function postPlanGenerate(context, req) {
     const sessionsTable = getSessionsTable();
     const sessions = [];
     for await (const s of sessionsTable.listEntities({
-      queryOptions: { filter: `PartitionKey eq '${PARTITION_KEY}'` }
+      queryOptions: { filter: `PartitionKey eq '${user.userId}'` }
     })) {
       sessions.push({
         id: s.rowKey,

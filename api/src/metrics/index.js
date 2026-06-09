@@ -2,9 +2,7 @@
 // GET  /api/metrics — retrieve all body weight entries (sorted by date)
 // POST /api/metrics — log today's body weight (one entry per day, upsert)
 
-const { getMetricsTable, authenticate, unauthorizedResponse, jsonResponse } = require("../shared/tableClient");
-
-const PARTITION_KEY = "rohit";
+const { getMetricsTable, authenticateUser, unauthorizedResponse, jsonResponse } = require("../shared/tableClient");
 
 module.exports = async function (context, req) {
   if (req.method === "OPTIONS") {
@@ -12,28 +10,29 @@ module.exports = async function (context, req) {
     return;
   }
 
-  if (!authenticate(req)) {
+  const user = await authenticateUser(req);
+  if (!user) {
     context.res = unauthorizedResponse();
     return;
   }
 
   if (req.method === "GET") {
-    return await getMetrics(context);
+    return await getMetrics(context, user);
   }
 
   if (req.method === "POST") {
-    return await postMetric(context, req);
+    return await postMetric(context, req, user);
   }
 
   context.res = jsonResponse(405, { error: "Method not allowed" });
 };
 
-async function getMetrics(context) {
+async function getMetrics(context, user) {
   try {
     const table = getMetricsTable();
     const entries = [];
     for await (const entity of table.listEntities({
-      queryOptions: { filter: `PartitionKey eq '${PARTITION_KEY}'` }
+      queryOptions: { filter: `PartitionKey eq '${user.userId}'` }
     })) {
       entries.push({ date: entity.rowKey, weightLb: entity.weightLb });
     }
@@ -45,7 +44,7 @@ async function getMetrics(context) {
   }
 }
 
-async function postMetric(context, req) {
+async function postMetric(context, req, user) {
   const weight = Number(req.body?.weightLb);
   if (!Number.isFinite(weight) || weight < 50 || weight > 999) {
     context.res = jsonResponse(400, { error: "weightLb must be a number between 50 and 999" });
@@ -56,7 +55,7 @@ async function postMetric(context, req) {
     const table = getMetricsTable();
     const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
     await table.upsertEntity({
-      partitionKey: PARTITION_KEY,
+      partitionKey: user.userId,
       rowKey:       today,
       weightLb:     weight,
       date:         today

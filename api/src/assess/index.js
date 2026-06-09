@@ -2,10 +2,9 @@
 // POST /api/assess — AI coaching assessment using Claude
 
 const Anthropic = require("@anthropic-ai/sdk");
-const { getSessionsTable, getExercisesTable, getProfileTable, authenticate, unauthorizedResponse } = require("../shared/tableClient");
+const { getSessionsTable, getExercisesTable, getProfileTable, authenticateUser, unauthorizedResponse } = require("../shared/tableClient");
 const { computeWeeklyVolume, computeVolumeBalance, computeStrengthCurves, detectPlateaus, computeProgressionRate, computeRpeTrend, getISOWeek } = require("../analytics/index");
 
-const PARTITION_KEY = "rohit";
 const client = new Anthropic();
 
 module.exports = async function (context, req) {
@@ -14,7 +13,8 @@ module.exports = async function (context, req) {
     return;
   }
 
-  if (!authenticate(req)) {
+  const user = await authenticateUser(req);
+  if (!user) {
     context.res = unauthorizedResponse();
     return;
   }
@@ -29,7 +29,7 @@ module.exports = async function (context, req) {
     const profileTable = getProfileTable();
     let profile = null;
     try {
-      profile = await profileTable.getEntity(PARTITION_KEY, "profile");
+      profile = await profileTable.getEntity(user.userId, "profile");
     } catch (err) {
       if (err.statusCode !== 404) throw err;
       // Profile doesn't exist yet, use defaults
@@ -46,7 +46,7 @@ module.exports = async function (context, req) {
     const sessionsTable = getSessionsTable();
     const sessions = [];
     for await (const s of sessionsTable.listEntities({
-      queryOptions: { filter: `PartitionKey eq '${PARTITION_KEY}'` }
+      queryOptions: { filter: `PartitionKey eq '${user.userId}'` }
     })) {
       sessions.push({
         id: s.rowKey,

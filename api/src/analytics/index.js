@@ -1,9 +1,7 @@
 // src/analytics/index.js
 // GET /api/analytics — rich training analytics for the AI coach and Assess page
 
-const { getSessionsTable, getExercisesTable, authenticate, unauthorizedResponse, jsonResponse } = require("../shared/tableClient");
-
-const PARTITION_KEY = "rohit";
+const { getSessionsTable, getExercisesTable, authenticateUser, unauthorizedResponse, jsonResponse } = require("../shared/tableClient");
 
 const KEY_EXERCISES = [
   "DB Flat Bench Press", "DB Row (one arm)", "DB Goblet Squat",
@@ -17,7 +15,8 @@ module.exports = async function (context, req) {
     return;
   }
 
-  if (!authenticate(req)) {
+  const user = await authenticateUser(req);
+  if (!user) {
     context.res = unauthorizedResponse();
     return;
   }
@@ -34,7 +33,7 @@ module.exports = async function (context, req) {
     // Fetch all sessions
     const sessions = [];
     for await (const s of sessionsTable.listEntities({
-      queryOptions: { filter: `PartitionKey eq '${PARTITION_KEY}'` }
+      queryOptions: { filter: `PartitionKey eq '${user.userId}'` }
     })) {
       sessions.push({
         id: s.rowKey,

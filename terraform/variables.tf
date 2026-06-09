@@ -32,6 +32,12 @@ variable "api_secret_key" {
   sensitive   = true
 }
 
+variable "jwt_secret" {
+  description = "Secret key for signing JWT session tokens"
+  type        = string
+  sensitive   = true
+}
+
 variable "key_vault_name" {
   description = "Existing Key Vault name where Anthropic API key is stored"
   type        = string

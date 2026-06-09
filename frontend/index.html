@@ -994,9 +994,262 @@ body::before {
   .bottom-nav { justify-content: center; }
   .nav-btn { padding: 8px 28px; }
 }
+
+/* ══════════════════════════════════════════
+   AUTH OVERLAY
+══════════════════════════════════════════ */
+.auth-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+
+.auth-overlay.hidden { display: none; }
+
+.auth-card {
+  width: 100%; max-width: 400px;
+  background: var(--glass);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 32px;
+  backdrop-filter: blur(10px);
+}
+
+.auth-logo {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 24px; font-weight: 700;
+  text-align: center; margin-bottom: 32px;
+  background: linear-gradient(90deg, var(--push), var(--pull), var(--legs));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.auth-mode-display {
+  font-size: 18px; font-weight: 600;
+  text-align: center; margin-bottom: 24px;
+  color: var(--ink);
+}
+
+.auth-form {
+  display: flex; flex-direction: column; gap: 12px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.auth-form.active {
+  opacity: 1; pointer-events: auto;
+}
+
+.auth-form input {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--ink);
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.auth-form input::placeholder {
+  color: var(--ink2);
+}
+
+.auth-btn {
+  width: 100%;
+  background: linear-gradient(90deg, var(--push), var(--pull));
+  color: white;
+  border: none; border-radius: 8px;
+  padding: 12px 16px;
+  font-weight: 600; font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.auth-btn:active {
+  transform: scale(0.98);
+}
+
+.auth-error {
+  color: var(--red);
+  font-size: 12px;
+  text-align: center;
+  min-height: 20px;
+}
+
+.auth-toggle {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink2);
+}
+
+.auth-toggle button {
+  color: var(--gold);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.auth-toggle button:active {
+  opacity: 0.7;
+}
+
+/* ══════════════════════════════════════════
+   ASSESSMENT LOADING ANIMATION
+══════════════════════════════════════════ */
+.assess-loading {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 24px; padding: 48px 24px;
+}
+
+.assess-loading-spinner {
+  position: relative; width: 80px; height: 80px;
+}
+
+.assess-loading-spinner::before {
+  content: '';
+  position: absolute; inset: 0;
+  border: 3px solid transparent;
+  border-top-color: var(--push);
+  border-right-color: var(--pull);
+  border-bottom-color: var(--legs);
+  border-radius: 50%;
+  animation: assessSpin 2s linear infinite;
+}
+
+.assess-loading-spinner::after {
+  content: '';
+  position: absolute; inset: 12px;
+  border: 2px solid transparent;
+  border-top-color: var(--legs);
+  border-left-color: var(--push);
+  border-radius: 50%;
+  animation: assessSpin 1.5s linear infinite reverse;
+}
+
+@keyframes assessSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.assess-loading-text {
+  text-align: center;
+}
+
+.assess-loading-text h3 {
+  font-size: 18px; font-weight: 600;
+  margin-bottom: 8px;
+  background: linear-gradient(90deg, var(--push), var(--pull), var(--legs));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.assess-loading-text p {
+  font-size: 14px;
+  color: var(--ink2);
+}
+
+.assess-loading-dots {
+  display: flex; gap: 6px; justify-content: center;
+}
+
+.assess-loading-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--ink2);
+  animation: assessPulse 1.4s ease-in-out infinite;
+}
+
+.assess-loading-dot:nth-child(1) { animation-delay: 0s; }
+.assess-loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.assess-loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes assessPulse {
+  0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+  30% { opacity: 1; transform: scale(1); }
+}
+
+.assess-error {
+  padding: 16px; border-radius: 8px;
+  background: rgba(255, 59, 59, 0.1);
+  border: 1px solid var(--red);
+  color: var(--red);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ══════════════════════════════════════════
+   ASSESSMENT REPORT STYLING
+══════════════════════════════════════════ */
+#ai-out {
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(255,77,28,0.03), rgba(28,122,255,0.03), rgba(0,217,126,0.03));
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  font-family: 'Space Mono', monospace;
+  animation: reportFadeIn 0.6s ease-out;
+}
+
+@keyframes reportFadeIn {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+#ai-out::first-letter {
+  margin-left: 0;
+}
 </style>
 </head>
 <body>
+
+<!-- AUTH OVERLAY -->
+<div id="auth-overlay" class="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">ROHIT.FIT</div>
+    <div class="auth-mode" id="auth-mode-display">Sign In</div>
+
+    <!-- Login Form -->
+    <form id="login-form" class="auth-form active" onsubmit="authLogin(event)">
+      <input type="email" id="login-email" placeholder="Email" required autocomplete="email">
+      <input type="password" id="login-password" placeholder="Password" required autocomplete="current-password">
+      <button type="submit" class="auth-btn">Sign In</button>
+      <div class="auth-error" id="login-error"></div>
+      <div class="auth-toggle">
+        Don't have an account? <button type="button" onclick="switchAuthMode('register')">Sign Up</button>
+      </div>
+    </form>
+
+    <!-- Register Form -->
+    <form id="register-form" class="auth-form" onsubmit="authRegister(event)">
+      <input type="email" id="register-email" placeholder="Email" required autocomplete="email">
+      <input type="password" id="register-password" placeholder="Password (8+ chars)" required minlength="8" autocomplete="new-password">
+      <input type="password" id="register-confirm" placeholder="Confirm Password" required minlength="8" autocomplete="new-password">
+      <button type="submit" class="auth-btn">Create Account</button>
+      <div class="auth-error" id="register-error"></div>
+      <div class="auth-toggle">
+        Already have an account? <button type="button" onclick="switchAuthMode('login')">Sign In</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <!-- ONBOARDING OVERLAY -->
 <div id="onboarding" class="onboarding" style="display:none">
@@ -1281,6 +1534,9 @@ body::before {
     <button class="nav-btn" id="nb-profile" onclick="goPage('profile',this)">
       <div class="nav-icon">👤</div>Profile
     </button>
+    <button class="nav-btn" id="nb-logout" onclick="logout()" style="color: var(--red);">
+      <div class="nav-icon">🚪</div>Logout
+    </button>
   </div>
 </nav>
 
@@ -1304,7 +1560,11 @@ body::before {
    CONFIG
 ═══════════════════════════════════════════ */
 const API_BASE = window.LIFTR_CONFIG?.API_BASE || window.ENV_API_BASE || "https://liftr-web.azurestaticapps.net/api";
-const API_KEY  = window.LIFTR_CONFIG?.API_KEY  || window.ENV_API_KEY  || "";
+
+/* ═══════════════════════════════════════════
+   AUTH STATE
+═══════════════════════════════════════════ */
+let currentUser = null;
 
 /* ═══════════════════════════════════════════
    WORKOUT DATA
@@ -1390,12 +1650,121 @@ const restState   = { active: false, total: 0, remaining: 0, ivl: null };
 const RPE_LABELS  = { 1:"Very Easy",2:"Easy",3:"Easy",4:"Moderate",5:"Moderate",6:"Moderate",7:"Hard",8:"Hard",9:"Very Hard",10:"Max Effort" };
 
 /* ═══════════════════════════════════════════
-   API
+   API (Session-based — no API key)
 ═══════════════════════════════════════════ */
-const H = { "X-API-Key": API_KEY };
-async function apiGet(p)       { const r = await fetch(API_BASE+p,{headers:H}); if(!r.ok) throw Error(r.status); return r.json(); }
-async function apiPost(p,b)    { const r = await fetch(API_BASE+p,{method:"POST",headers:{...H,"Content-Type":"application/json"},body:JSON.stringify(b)}); if(!r.ok) throw Error(r.status); return r.json(); }
-async function apiDelete(p)    { const r = await fetch(API_BASE+p,{method:"DELETE",headers:H}); if(!r.ok) throw Error(r.status); return r.json(); }
+const H = { "Content-Type": "application/json" };
+async function apiGet(p)       { const r = await fetch(API_BASE+p,{headers:H,credentials:"include"}); if(!r.ok) throw Error(r.status); return r.json(); }
+async function apiPost(p,b)    { const r = await fetch(API_BASE+p,{method:"POST",headers:H,credentials:"include",body:JSON.stringify(b)}); if(!r.ok) throw Error(r.status); return r.json(); }
+async function apiDelete(p)    { const r = await fetch(API_BASE+p,{method:"DELETE",headers:H,credentials:"include"}); if(!r.ok) throw Error(r.status); return r.json(); }
+
+/* ═══════════════════════════════════════════
+   AUTH FUNCTIONS
+═══════════════════════════════════════════ */
+async function checkAuth() {
+  try {
+    const user = await fetch(API_BASE + "/auth/me", { credentials: "include" }).then(r => r.json());
+    if (user && user.userId) {
+      currentUser = user;
+      document.getElementById("auth-overlay").classList.add("hidden");
+      initApp();
+      return true;
+    }
+  } catch (err) {
+    // Not authenticated
+  }
+  return false;
+}
+
+function switchAuthMode(mode) {
+  document.getElementById("login-form").classList.toggle("active", mode === "login");
+  document.getElementById("register-form").classList.toggle("active", mode === "register");
+  document.getElementById("auth-mode-display").textContent = mode === "login" ? "Sign In" : "Create Account";
+  document.getElementById("login-error").textContent = "";
+  document.getElementById("register-error").textContent = "";
+}
+
+async function authLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById("login-email").value;
+  const password = document.getElementById("login-password").value;
+  const errorEl = document.getElementById("login-error");
+  errorEl.textContent = "";
+
+  try {
+    const res = await fetch(API_BASE + "/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, password })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      errorEl.textContent = err.error || "Login failed";
+      return;
+    }
+
+    const data = await res.json();
+    currentUser = { userId: data.userId, email };
+    document.getElementById("auth-overlay").classList.add("hidden");
+    initApp();
+  } catch (err) {
+    errorEl.textContent = "Connection error. Check your internet.";
+  }
+}
+
+async function authRegister(e) {
+  e.preventDefault();
+  const email = document.getElementById("register-email").value;
+  const password = document.getElementById("register-password").value;
+  const confirm = document.getElementById("register-confirm").value;
+  const errorEl = document.getElementById("register-error");
+  errorEl.textContent = "";
+
+  if (password !== confirm) {
+    errorEl.textContent = "Passwords don't match";
+    return;
+  }
+
+  try {
+    const res = await fetch(API_BASE + "/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, password })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      errorEl.textContent = err.error || "Registration failed";
+      return;
+    }
+
+    const data = await res.json();
+    currentUser = { userId: data.userId, email };
+    document.getElementById("auth-overlay").classList.add("hidden");
+    initApp();
+  } catch (err) {
+    errorEl.textContent = "Connection error. Check your internet.";
+  }
+}
+
+async function logout() {
+  try {
+    await fetch(API_BASE + "/auth/logout", {
+      method: "POST",
+      credentials: "include"
+    });
+    currentUser = null;
+    document.getElementById("auth-overlay").classList.remove("hidden");
+    // Reset form
+    switchAuthMode("login");
+    document.getElementById("login-form").reset();
+    document.getElementById("register-form").reset();
+  } catch (err) {
+    console.error("Logout error:", err);
+  }
+}
 
 /* ═══════════════════════════════════════════
    NAVIGATION
@@ -1846,19 +2215,40 @@ async function runAssessment() {
 
   btn.classList.add("running");
   out.style.display = "block";
-  out.innerHTML = ""; // Clear any previous output
+
+  // Show loading animation
+  out.innerHTML = `
+    <div class="assess-loading">
+      <div class="assess-loading-spinner"></div>
+      <div class="assess-loading-text">
+        <h3>Analyzing Your Training</h3>
+        <p>Claude is reviewing your data</p>
+        <div class="assess-loading-dots">
+          <div class="assess-loading-dot"></div>
+          <div class="assess-loading-dot"></div>
+          <div class="assess-loading-dot"></div>
+        </div>
+      </div>
+    </div>
+  `;
 
   try {
     const resp = await fetch(API_BASE + "/assess", {
       method: "POST",
-      headers: H  // X-API-Key header
+      headers: H,
+      credentials: "include"
     });
 
     if (!resp.ok) {
-      out.textContent = "Error loading assessment. Try again.";
+      const error = await resp.json();
+      out.innerHTML = `<div class="assess-error">⚠️ ${escapeHtml(error.error || "Assessment failed. Try again.")}</div>`;
       btn.classList.remove("running");
       return;
     }
+
+    // Clear loading animation, prepare for streaming
+    out.innerHTML = "";
+    let fullResponse = "";
 
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
@@ -1870,13 +2260,14 @@ async function runAssessment() {
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
-      buffer = lines.pop() || "";  // Keep incomplete line in buffer
+      buffer = lines.pop() || "";
 
       for (const line of lines) {
         if (line.startsWith("data: ")) {
-          const chunk = line.slice(6);  // Remove "data: " prefix
+          const chunk = line.slice(6);
           if (chunk) {
-            out.textContent += chunk;
+            fullResponse += chunk;
+            out.textContent = fullResponse;
           }
         }
       }
@@ -1885,7 +2276,7 @@ async function runAssessment() {
     btn.classList.remove("running");
   } catch (err) {
     console.error(err);
-    out.textContent = "Error connecting to assessment. Check your connection.";
+    out.innerHTML = `<div class="assess-error">🔌 Connection error. Check your internet.</div>`;
     btn.classList.remove("running");
   }
 }
@@ -1894,7 +2285,8 @@ async function loadPlan() {
   try {
     const resp = await fetch(API_BASE + "/plan", {
       method: "GET",
-      headers: H
+      headers: H,
+      credentials: "include"
     });
     if (resp.ok) {
       const data = await resp.json();
@@ -1925,7 +2317,8 @@ async function generatePlan() {
   try {
     const resp = await fetch(API_BASE + "/plan/generate", {
       method: "POST",
-      headers: H
+      headers: H,
+      credentials: "include"
     });
 
     if (!resp.ok) {
@@ -2343,7 +2736,7 @@ function renderAnalytics() {
 /* ═══════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════ */
-setTimeout(async () => {
+async function initApp() {
   document.getElementById("splash").classList.add("gone");
   await loadPlan();  // Load dynamic plan (or fallback to hardcoded PLANS)
   renderPlan();
@@ -2351,6 +2744,13 @@ setTimeout(async () => {
   await checkOnboarding();
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+}
+
+setTimeout(async () => {
+  const authenticated = await checkAuth();
+  if (!authenticated) {
+    document.getElementById("splash").classList.add("gone");
   }
 }, 1500);
 </script>

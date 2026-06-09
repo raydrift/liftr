@@ -1,9 +1,7 @@
 // src/stats/index.js
 // GET /api/stats — aggregated training stats for the Assess page
 
-const { getSessionsTable, getExercisesTable, authenticate, unauthorizedResponse, jsonResponse } = require("../shared/tableClient");
-
-const PARTITION_KEY = "rohit";
+const { getSessionsTable, getExercisesTable, authenticateUser, unauthorizedResponse, jsonResponse } = require("../shared/tableClient");
 
 module.exports = async function (context, req) {
   if (req.method === "OPTIONS") {
@@ -11,7 +9,8 @@ module.exports = async function (context, req) {
     return;
   }
 
-  if (!authenticate(req)) {
+  const user = await authenticateUser(req);
+  if (!user) {
     context.res = unauthorizedResponse();
     return;
   }
@@ -23,7 +22,7 @@ module.exports = async function (context, req) {
     // Fetch all sessions
     const sessions = [];
     const sessionEntities = sessionsTable.listEntities({
-      queryOptions: { filter: `PartitionKey eq '${PARTITION_KEY}'` }
+      queryOptions: { filter: `PartitionKey eq '${user.userId}'` }
     });
     for await (const s of sessionEntities) {
       sessions.push({ id: s.rowKey, date: s.date, dayKey: s.dayKey, dayType: s.dayType });
