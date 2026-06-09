@@ -127,7 +127,7 @@ Keep response under 500 words. Be direct and actionable.`;
 
     // Call Claude with streaming
     const stream = await client.messages.stream({
-      model: "claude-opus-4-6",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 500,
       system: systemPrompt,
       messages: [
