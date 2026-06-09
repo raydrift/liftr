@@ -32,6 +32,17 @@ variable "api_secret_key" {
   sensitive   = true
 }
 
+variable "key_vault_name" {
+  description = "Existing Key Vault name where Anthropic API key is stored"
+  type        = string
+  # Example: "liftr-kv"
+}
+
+variable "key_vault_resource_group" {
+  description = "Resource group where Key Vault is located (can differ from main resource group)"
+  type        = string
+}
+
 variable "container_image_tag" {
   description = "Docker image tag to deploy (set to git SHA by CI)"
   type        = string

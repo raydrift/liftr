@@ -308,5 +308,8 @@ function emptyAnalytics() {
 module.exports.detectPlateaus        = detectPlateaus;
 module.exports.computeWeeklyVolume   = computeWeeklyVolume;
 module.exports.computeVolumeBalance  = computeVolumeBalance;
+module.exports.computeStrengthCurves = computeStrengthCurves;
+module.exports.computeProgressionRate = computeProgressionRate;
+module.exports.computeRpeTrend       = computeRpeTrend;
 module.exports.epley1RM              = epley1RM;
 module.exports.getISOWeek            = getISOWeek;

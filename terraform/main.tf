@@ -62,6 +62,40 @@ resource "azurerm_container_registry" "main" {
 }
 
 # ─────────────────────────────────────────
+# Key Vault reference — secure Anthropic API key
+# ─────────────────────────────────────────
+data "azurerm_key_vault" "main" {
+  name                = var.key_vault_name
+  resource_group_name = var.key_vault_resource_group
+}
+
+data "azurerm_key_vault_secret" "anthropic_api_key" {
+  name         = "anthropic-api-key"
+  key_vault_id = data.azurerm_key_vault.main.id
+}
+
+# ─────────────────────────────────────────
+# Managed Identity — Container App identity
+# ─────────────────────────────────────────
+resource "azurerm_user_assigned_identity" "app" {
+  name                = "${var.app_name}-identity"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+
+  tags = var.tags
+}
+
+# ─────────────────────────────────────────
+# RBAC: Grant Container App access to KV secret
+# Role: Key Vault Secrets User (minimal: get, list only)
+# ─────────────────────────────────────────
+resource "azurerm_role_assignment" "app_kv_access" {
+  scope                = data.azurerm_key_vault.main.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.app.principal_id
+}
+
+# ─────────────────────────────────────────
 # Container Apps — serverless hosting
 # No VM quota required (Consumption plan)
 # ─────────────────────────────────────────
@@ -78,6 +112,11 @@ resource "azurerm_container_app" "main" {
   container_app_environment_id = azurerm_container_app_environment.main.id
   resource_group_name          = var.resource_group_name
   revision_mode                = "Single"
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.app.id]
+  }
 
   registry {
     server               = azurerm_container_registry.main.login_server
@@ -98,6 +137,12 @@ resource "azurerm_container_app" "main" {
   secret {
     name  = "api-secret-key"
     value = var.api_secret_key
+  }
+
+  secret {
+    name                = "anthropic-api-key"
+    key_vault_secret_id = data.azurerm_key_vault_secret.anthropic_api_key.versionless_id
+    identity            = azurerm_user_assigned_identity.app.id
   }
 
   template {
@@ -143,6 +188,11 @@ resource "azurerm_container_app" "main" {
       env {
         name  = "METRICS_TABLE_NAME"
         value = azurerm_storage_table.metrics.name
+      }
+
+      env {
+        name        = "ANTHROPIC_API_KEY"
+        secret_name = "anthropic-api-key"
       }
     }
   }

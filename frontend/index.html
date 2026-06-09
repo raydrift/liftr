@@ -1835,12 +1835,54 @@ async function runAssessment() {
   const out = document.getElementById("ai-out");
 
   if (!statsData || statsData.totalSessions < 1) {
-    toast("Log some sessions first", "err"); return;
+    toast("Log some sessions first", "err");
+    return;
   }
 
+  btn.classList.add("running");
   out.style.display = "block";
-  out.textContent = "AI assessment is disabled for V1 until it is proxied through the managed API. Your stats above are live; the coach report needs a backend endpoint so model API keys never ship to the browser.";
-  btn.classList.remove("running");
+  out.innerHTML = ""; // Clear any previous output
+
+  try {
+    const resp = await fetch(API_BASE + "/assess", {
+      method: "POST",
+      headers: H  // X-API-Key header
+    });
+
+    if (!resp.ok) {
+      out.textContent = "Error loading assessment. Try again.";
+      btn.classList.remove("running");
+      return;
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";  // Keep incomplete line in buffer
+
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          const chunk = line.slice(6);  // Remove "data: " prefix
+          if (chunk) {
+            out.textContent += chunk;
+          }
+        }
+      }
+    }
+
+    btn.classList.remove("running");
+  } catch (err) {
+    console.error(err);
+    out.textContent = "Error connecting to assessment. Check your connection.";
+    btn.classList.remove("running");
+  }
 }
 
 /* ═══════════════════════════════════════════

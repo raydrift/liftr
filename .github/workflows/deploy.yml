@@ -19,11 +19,14 @@ env:
   TF_VAR_app_name: ${{ vars.APP_NAME }}
   TF_VAR_storage_account_name: ${{ vars.STORAGE_ACCOUNT_NAME }}
   TF_VAR_api_secret_key: ${{ secrets.API_SECRET_KEY }}
+  TF_VAR_key_vault_name: ${{ vars.KEY_VAULT_NAME }}
+  TF_VAR_key_vault_resource_group: ${{ vars.KEY_VAULT_RESOURCE_GROUP }}
   TF_VAR_container_image_tag: ${{ github.sha }}
   TF_STATE_RESOURCE_GROUP: ${{ vars.TF_STATE_RESOURCE_GROUP }}
   TF_STATE_STORAGE_ACCOUNT: ${{ vars.TF_STATE_STORAGE_ACCOUNT }}
   TF_STATE_CONTAINER: ${{ vars.TF_STATE_CONTAINER }}
   TF_STATE_KEY: ${{ vars.TF_STATE_KEY }}
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
 jobs:
   deploy:
@@ -61,6 +64,15 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Store Anthropic API key in Key Vault
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az keyvault secret set \
+              --vault-name "${{ vars.KEY_VAULT_NAME }}" \
+              --name "anthropic-api-key" \
+              --value "${{ secrets.ANTHROPIC_API_KEY }}"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -115,13 +127,15 @@ jobs:
       - name: Terraform validate
         run: terraform -chdir=terraform validate
 
-      # Phase 1: create storage + registry before building the image
-      - name: Terraform apply (storage and registry)
+      # Phase 1: create storage, identity, RBAC, and registry before building the image
+      - name: Terraform apply (storage, identity, RBAC, and registry)
         run: |
           terraform -chdir=terraform apply -input=false -auto-approve \
             -target=azurerm_storage_account.main \
             -target=azurerm_storage_table.sessions \
             -target=azurerm_storage_table.exercises \
+            -target=azurerm_user_assigned_identity.app \
+            -target=azurerm_role_assignment.app_kv_access \
             -target=azurerm_container_registry.main
 
       - name: Get registry details
