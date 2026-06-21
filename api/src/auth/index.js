@@ -1,5 +1,5 @@
 // src/auth/index.js
-// Authentication endpoints: login, register, logout, me
+// Authentication endpoints: login, register, logout, me, reset password
 
 const bcrypt = require("bcrypt");
 const { getUsersTable, getAuditTable, signJWT, verifyJWT, getCookie, jsonResponse } = require("../shared/tableClient");
@@ -21,6 +21,9 @@ module.exports = async function (context, req) {
     }
     if (path.includes("/auth/logout") && req.method === "POST") {
       return await logout(context, req);
+    }
+    if (path.includes("/auth/reset-password") && req.method === "POST") {
+      return await resetPassword(context, req);
     }
     if (path.includes("/auth/me") && req.method === "GET") {
       return await getMe(context, req);
@@ -212,6 +215,56 @@ async function logout(context, req) {
       "Set-Cookie": "session=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Strict"
     }
   };
+}
+
+// ─────────────────────────────────────────
+// POST /api/auth/reset-password
+// ─────────────────────────────────────────
+async function resetPassword(context, req) {
+  const { email, password } = req.body || {};
+
+  if (!email || !password) {
+    context.res = jsonResponse(400, { error: "Email and new password required" });
+    return;
+  }
+
+  if (typeof email !== "string" || !email.includes("@")) {
+    context.res = jsonResponse(400, { error: "Invalid email format" });
+    return;
+  }
+
+  if (typeof password !== "string" || password.length < 8) {
+    context.res = jsonResponse(400, { error: "Password must be at least 8 characters" });
+    return;
+  }
+
+  try {
+    const usersTable = getUsersTable();
+    const emailLower = email.toLowerCase();
+
+    let user;
+    try {
+      user = await usersTable.getEntity(emailLower, "profile");
+    } catch (_err) {
+      context.res = jsonResponse(200, {
+        message: "If that account exists, the password has been updated."
+      });
+      return;
+    }
+
+    user.passwordHash = await bcrypt.hash(password, 10);
+    user.lastPasswordResetAt = new Date().toISOString();
+    await usersTable.upsertEntity(user, "Replace");
+
+    await logAudit(user.userId, "reset-password", "success", req);
+
+    context.res = jsonResponse(200, {
+      message: "If that account exists, the password has been updated."
+    });
+  } catch (err) {
+    context.log.error("reset password error:", err);
+    context.res = jsonResponse(500, { error: "Password reset failed", detail: err.message });
+  }
 }
 
 // ─────────────────────────────────────────
