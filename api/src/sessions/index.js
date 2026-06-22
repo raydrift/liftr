@@ -48,7 +48,9 @@ async function getSessions(context, user) {
         dayName: entity.dayName,
         dayType: entity.dayType,
         notes: entity.notes || "",
-        rpe: entity.rpe || 0
+        rpe: entity.rpe || 0,
+        sessionDurationSec: entity.sessionDurationSec || 0,
+        skippedExercises: entity.skippedExercises ? JSON.parse(entity.skippedExercises) : []
       });
     }
 
@@ -103,7 +105,11 @@ async function postSession(context, req, user) {
       dayName: body.dayName || "",
       dayType: body.dayType || "",
       notes: body.notes || "",
-      rpe: body.rpe || 0
+      rpe: body.rpe || 0,
+      sessionStartedAt: body.sessionStartedAt || "",
+      sessionEndedAt: body.sessionEndedAt || "",
+      sessionDurationSec: body.sessionDurationSec || 0,
+      skippedExercises: JSON.stringify(body.skippedExercises || [])
     });
 
     // Save each exercise as a separate entity (allows future querying per exercise)

@@ -12,6 +12,7 @@ const analyticsHandler = require('./src/analytics/index');
 const assessHandler    = require('./src/assess/index');
 const planHandler      = require('./src/plan/index');
 const metricsHandler   = require('./src/metrics/index');
+const exercisesHandler = require('./src/exercises/index');
 
 const app = express();
 
@@ -108,6 +109,7 @@ app.all('/api/analytics', adapt(analyticsHandler));
 app.all('/api/assess',    adapt(assessHandler));
 app.all('/api/plan',      adapt(planHandler));
 app.all('/api/metrics',   adapt(metricsHandler));
+app.all('/api/exercises', adapt(exercisesHandler));
 
 // Serve frontend for all non-API routes
 app.get('*', (_req, res) => {
