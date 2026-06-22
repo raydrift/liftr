@@ -5,10 +5,16 @@
 
 const Anthropic = require("@anthropic-ai/sdk");
 const { getPlanTable, getSessionsTable, getExercisesTable, getProfileTable, authenticateUser, unauthorizedResponse, jsonResponse } = require("../shared/tableClient");
-const { computeWeeklyVolume, computeVolumeBalance, computeStrengthCurves, detectPlateaus, computeProgressionRate, computeRpeTrend, getISOWeek } = require("../analytics/index");
+const { computeVolumeBalance, computeStrengthCurves, detectPlateaus, computeProgressionRate, computeRpeTrend } = require("../analytics/index");
+const { getLibrarySummaryForPrompt } = require("../exercises/library");
 
 const CURRENT_ROW_KEY = "current";
 const client = new Anthropic();
+
+const VALID_DAY_TYPES = new Set([
+  "PUSH", "PULL", "LEGS", "UPPER", "LOWER", "FULL",
+  "FUNCTIONAL", "MOBILITY", "CONDITIONING", "YOGA", "HYBRID", "CUSTOM"
+]);
 
 module.exports = async function (context, req) {
   if (req.method === "OPTIONS") {
@@ -75,18 +81,14 @@ async function putPlan(context, req, user) {
 
     const table = getPlanTable();
 
-    // Get current version
     let version = 1;
-    let previousVersionKey = null;
     try {
       const current = await table.getEntity(user.userId, CURRENT_ROW_KEY);
       version = (current.version || 1) + 1;
-      previousVersionKey = CURRENT_ROW_KEY;
     } catch (e) {
       // No existing plan
     }
 
-    // Upsert current plan
     await table.upsertEntity({
       partitionKey: user.userId,
       rowKey: CURRENT_ROW_KEY,
@@ -111,12 +113,22 @@ async function postPlanGenerate(context, req, user) {
   try {
     // Fetch profile
     const profileTable = getProfileTable();
-    let profile = null;
+    let profile = { goals: "", experience: "Beginner", limitations: "", daysPerWeek: 4, sessionLengthMins: 60, gender: "", availableEquipment: "[]", trainingPreferences: "{}" };
     try {
-      profile = await profileTable.getEntity(user.userId, "profile");
-    } catch (err) {
-      profile = { goals: "", experience: "Beginner", limitations: "", daysPerWeek: 4, sessionLengthMins: 60 };
-    }
+      const p = await profileTable.getEntity(user.userId, "profile");
+      Object.assign(profile, p);
+    } catch (err) { /* use defaults */ }
+
+    const equipment = profile.availableEquipment ? JSON.parse(profile.availableEquipment) : [];
+    const preferences = profile.trainingPreferences ? JSON.parse(profile.trainingPreferences) : {};
+
+    // Parse request body options
+    const {
+      trainingStyle = "ppl",
+      includeExercises = [],
+      excludeExercises = [],
+      focusMuscles = []
+    } = req.body || {};
 
     // Fetch sessions
     const sessionsTable = getSessionsTable();
@@ -129,7 +141,8 @@ async function postPlanGenerate(context, req, user) {
         date: s.date,
         dayKey: s.dayKey,
         dayType: s.dayType || "",
-        rpe: s.rpe || 0
+        rpe: s.rpe || 0,
+        sessionDurationSec: s.sessionDurationSec || 0
       });
     }
     sessions.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -139,12 +152,12 @@ async function postPlanGenerate(context, req, user) {
       return;
     }
 
-    // Fetch exercises and compute analytics
+    // Fetch exercise history for analytics
     const exerciseHistory = {};
     const sessionExerciseSets = {};
     const exercisesTable = getExercisesTable();
 
-    await Promise.all(sessions.map(async (session) => {
+    await Promise.all(sessions.slice(-20).map(async (session) => {
       let totalSets = 0;
       for await (const ex of exercisesTable.listEntities({
         queryOptions: { filter: `PartitionKey eq '${session.id}'` }
@@ -154,67 +167,143 @@ async function postPlanGenerate(context, req, user) {
         if (!exerciseHistory[ex.name]) exerciseHistory[ex.name] = [];
         sets.forEach(set => {
           if (set.weight > 0 && set.reps > 0) {
-            exerciseHistory[ex.name].push({
-              weight: set.weight,
-              reps: set.reps,
-              date: session.date,
-              sessionId: session.id
-            });
+            exerciseHistory[ex.name].push({ weight: set.weight, reps: set.reps, date: session.date });
           }
         });
       }
       sessionExerciseSets[session.id] = totalSets;
     }));
 
-    // Compute analytics
     const now = new Date();
     const volumeBalance = computeVolumeBalance(sessions, sessionExerciseSets, now);
     const plateaus = detectPlateaus(exerciseHistory);
     const progressionRate = computeProgressionRate(exerciseHistory);
+    const rpeTrend = computeRpeTrend(sessions, now);
 
-    // Assemble plan generation prompt
-    const systemPrompt = `You are an expert gym coach. Based on the user's profile and recent training analytics, generate an optimized 5-day workout plan.
+    // Exercise library summary for the prompt (condensed)
+    const libSummary = getLibrarySummaryForPrompt();
 
-User Profile:
-- Goals: ${profile.goals || "(not specified)"}
+    // Determine days per week from profile
+    const daysPerWeek = Math.min(Math.max(Number(profile.daysPerWeek) || 4, 1), 7);
+
+    const systemPrompt = `You are an expert strength and conditioning coach with deep knowledge of exercise science, periodization, and training psychology. You prescribe plans for real people with real constraints — not generic programs.
+
+COACHING PRINCIPLES:
+- Compound lifts always come first in a session
+- 10-20 working sets per muscle group per week is optimal
+- 48+ hours between heavy sessions for the same muscle group
+- Always include a 5-8 minute warmup and 3-5 minute cooldown
+- Progressive overload drives adaptation — prescribe weights based on history
+- RPE tracking reveals fatigue: if RPE trend is rising, reduce intensity
+- Plateaus require exercise variation or rep scheme change (not just weight)
+- For female athletes: similar principles apply; typically more responsive to higher volume, shorter rest periods
+- Equipment constraints are hard limits — never prescribe unavailable equipment
+
+USER PROFILE:
+- Goals: ${profile.goals || "General fitness"}
 - Experience: ${profile.experience || "Beginner"}
-- Limitations: ${profile.limitations || "(none)"}
-- Training ${profile.daysPerWeek}x/week, ${profile.sessionLengthMins} minutes/session
+- Limitations/Injuries: ${profile.limitations || "None"}
+- Gender: ${profile.gender || "not specified"}
+- Training ${daysPerWeek}x/week, ${profile.sessionLengthMins || 60} min sessions
+- Available equipment: ${equipment.length ? equipment.join(", ") : "basic gym (dumbbells, bench, pull-up bar)"}
+- Training style preference: ${trainingStyle}
+${preferences.preferredModalities?.length ? `- Preferred modalities: ${preferences.preferredModalities.join(", ")}` : ""}
+${excludeExercises.length ? `- Exercises to EXCLUDE: ${excludeExercises.join(", ")}` : ""}
+${focusMuscles.length ? `- Focus muscles requested: ${focusMuscles.join(", ")}` : ""}
 
-Recent Analytics (last 8 weeks):
-- Volume balance: ${JSON.stringify(volumeBalance)}
-- Plateaued exercises: ${JSON.stringify(plateaus)}
-- Progression rate: ${JSON.stringify(progressionRate)}
+RECENT TRAINING ANALYTICS (last 8 weeks):
+- Volume balance by type: ${JSON.stringify(volumeBalance)}
+- Plateaued exercises: ${JSON.stringify(plateaus.map(p => p.exercise))}
+- Progression rate per exercise: ${JSON.stringify(progressionRate)}
+- RPE trend: ${JSON.stringify(rpeTrend)}
 
-Generate a 5-day plan with this exact JSON structure. Think through step-by-step:
-1. Identify weak muscle groups (low volume balance)
-2. Find plateaued exercises that need change
-3. Adjust weights: +5-10% for good progression, -10-15% for plateaus
-4. Plan exercise order (compound first)
+EXERCISE LIBRARY (by primary muscle, id(modality)):
+${Object.entries(libSummary).map(([m, exs]) => `  ${m}: ${exs.join(", ")}`).join("\n")}
 
-Return ONLY valid JSON (no markdown, no explanation):
-{
-  "push1": {
-    "name": "Push Day 1",
-    "sub": "Chest Focus",
-    "type": "PUSH",
-    "c": "push",
-    "exercises": [
-      {
-        "name": "DB Flat Bench Press",
-        "target": "4×8",
-        "w": 45,
-        "unit": "lb each",
-        "sets": 4,
-        "tip": "Full ROM · pause at bottom"
+TRAINING STYLE GUIDE:
+- "ppl": Push/Pull/Legs split — classic hypertrophy structure
+- "upper-lower": Upper/Lower — good for 4-day frequency
+- "hybrid": Mix strength + functional movements (kettlebell, carries, sled work)
+- "full-body": Full-body 3x/week — best for beginners
+- "athletic": Functional, power, conditioning focus`;
+
+    // Tool definition for structured plan output
+    const planTool = {
+      name: "generate_workout_plan",
+      description: "Generate a structured workout plan with warmup, exercises, and cooldown for each training day",
+      input_schema: {
+        type: "object",
+        required: ["meta", "days"],
+        properties: {
+          meta: {
+            type: "object",
+            required: ["trainingStyle", "daysPerWeek", "rationale"],
+            properties: {
+              trainingStyle: { type: "string" },
+              daysPerWeek: { type: "number" },
+              rationale: { type: "string", description: "Brief explanation of the plan structure" }
+            }
+          },
+          days: {
+            type: "object",
+            description: "Map of day keys to day definitions. Use slugs like push1, pull1, legs, upper1, lower1, full1, functional1, etc.",
+            additionalProperties: {
+              type: "object",
+              required: ["name", "type", "exercises"],
+              properties: {
+                name: { type: "string" },
+                type: { type: "string", enum: [...VALID_DAY_TYPES] },
+                sub: { type: "string" },
+                estimatedDurationMin: { type: "number" },
+                warmup: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    required: ["exerciseId", "duration"],
+                    properties: {
+                      exerciseId: { type: "string" },
+                      name: { type: "string" },
+                      duration: { type: "string" },
+                      note: { type: "string" }
+                    }
+                  }
+                },
+                exercises: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    required: ["name", "sets", "reps", "w"],
+                    properties: {
+                      exerciseId: { type: "string" },
+                      name: { type: "string" },
+                      sets: { type: "number" },
+                      reps: { type: "string" },
+                      w: { type: "number" },
+                      unit: { type: "string" },
+                      restSec: { type: "number" },
+                      tip: { type: "string" },
+                      progressionRule: { type: "string" }
+                    }
+                  }
+                },
+                cooldown: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    required: ["exerciseId", "duration"],
+                    properties: {
+                      exerciseId: { type: "string" },
+                      name: { type: "string" },
+                      duration: { type: "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
-    ]
-  },
-  "pull1": { ... },
-  "legs": { ... },
-  "push2": { ... },
-  "pull2": { ... }
-}`;
+    };
 
     // Send SSE response headers
     context.res = {
@@ -223,80 +312,54 @@ Return ONLY valid JSON (no markdown, no explanation):
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
-        "Access-Control-Allow-Origin": "*"
+        "Connection": "keep-alive"
       }
     };
 
-    // Send initial status
     context.res.body += `data: ${JSON.stringify({ type: "status", text: "Analyzing your training data..." })}\n\n`;
 
-    const stream = await client.messages.stream({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 2000,
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 4000,
       system: systemPrompt,
+      tools: [planTool],
+      tool_choice: { type: "any" },
       messages: [
         {
           role: "user",
-          content: "Generate my optimized 5-day workout plan based on my data and analytics."
+          content: `Generate my optimized ${daysPerWeek}-day workout plan. Training style: ${trainingStyle}. Include warmup and cooldown for each day. Base weights on my training history — don't be conservative, I need progressive overload.${includeExercises.length ? ` Try to include: ${includeExercises.join(", ")}.` : ""}`
         }
       ]
     });
 
-    let fullResponse = "";
-    let statusCount = 0;
+    context.res.body += `data: ${JSON.stringify({ type: "status", text: "Building your plan..." })}\n\n`;
 
-    for await (const event of stream) {
-      if (event.type === 'content_block_delta' && event.delta?.text) {
-        const text = event.delta.text;
-        fullResponse += text;
-
-        // Stream chunk as text event
-        context.res.body += `data: ${JSON.stringify({ type: "text", text })}\n\n`;
-
-        // Periodically update status
-        statusCount++;
-        if (statusCount % 20 === 0) {
-          if (statusCount < 100) {
-            context.res.body += `data: ${JSON.stringify({ type: "status", text: "Generating exercises..." })}\n\n`;
-          } else {
-            context.res.body += `data: ${JSON.stringify({ type: "status", text: "Finalizing plan..." })}\n\n`;
-          }
-        }
-      }
-    }
-
-    // Parse final response
-    let generatedPlan = null;
-    try {
-      // Extract JSON from response (may have thinking text before)
-      const jsonMatch = fullResponse.match(/\{[\s\S]*"push1"[\s\S]*\}/);
-      if (jsonMatch) {
-        generatedPlan = JSON.parse(jsonMatch[0]);
-        const errors = validatePlan(generatedPlan);
-        if (errors.length) {
-          context.res.body += `data: ${JSON.stringify({ type: "error", text: "Generated plan has validation errors" })}\n\n`;
-          return;
-        }
-      }
-    } catch (parseErr) {
-      context.log.error("Plan JSON parse error:", parseErr);
-      context.res.body += `data: ${JSON.stringify({ type: "error", text: "Failed to parse generated plan" })}\n\n`;
+    // Extract tool use result
+    const toolUse = response.content.find(b => b.type === "tool_use");
+    if (!toolUse || toolUse.name !== "generate_workout_plan") {
+      context.res.body += `data: ${JSON.stringify({ type: "error", text: "AI did not produce a structured plan" })}\n\n`;
       return;
     }
 
-    if (!generatedPlan) {
-      context.res.body += `data: ${JSON.stringify({ type: "error", text: "No valid plan in response" })}\n\n`;
+    const { meta, days } = toolUse.input;
+
+    // Validate and flatten into legacy-compatible plan format
+    const errors = validatePlanDays(days);
+    if (errors.length) {
+      context.res.body += `data: ${JSON.stringify({ type: "error", text: `Plan validation failed: ${errors[0]}` })}\n\n`;
       return;
     }
 
-    // Save historical version (if current exists)
+    // Build the plan object (days is already the right shape)
+    const generatedPlan = days;
+
+    // Archive existing plan
     const planTable = getPlanTable();
     try {
-      const current = await planTable.getEntity(PARTITION_KEY, CURRENT_ROW_KEY);
+      const current = await planTable.getEntity(user.userId, CURRENT_ROW_KEY);
       const timestamp = Date.now();
       await planTable.upsertEntity({
-        partitionKey: PARTITION_KEY,
+        partitionKey: user.userId,
         rowKey: `plan-${timestamp}`,
         plansJson: current.plansJson,
         generatedAt: current.generatedAt,
@@ -304,27 +367,30 @@ Return ONLY valid JSON (no markdown, no explanation):
         version: current.version
       }, "Replace");
     } catch (err) {
-      // No previous plan, skip history
+      // No previous plan to archive
     }
 
-    // Save new current plan
+    // Save new plan
     await planTable.upsertEntity({
-      partitionKey: PARTITION_KEY,
+      partitionKey: user.userId,
       rowKey: CURRENT_ROW_KEY,
       plansJson: JSON.stringify(generatedPlan),
       generatedAt: new Date().toISOString(),
-      generatedFrom: "assessment",
-      notes: "Generated from training analytics",
-      version: 2
+      generatedFrom: "ai-generated",
+      notes: meta.rationale || "",
+      version: 1,
+      trainingStyle: meta.trainingStyle || trainingStyle
     }, "Replace");
 
-    // Send final plan event
-    context.res.body += `data: ${JSON.stringify({ type: "plan", json: generatedPlan })}\n\n`;
-
-    context.log.info("plan generation: complete", { version: 2 });
+    context.res.body += `data: ${JSON.stringify({ type: "plan", json: generatedPlan, meta })}\n\n`;
+    context.log.info("plan generation: complete", { style: meta.trainingStyle, days: Object.keys(days).length });
   } catch (err) {
     context.log.error("postPlanGenerate error:", err);
-    context.res.body += `data: ${JSON.stringify({ type: "error", text: "Failed to generate plan" })}\n\n`;
+    if (context.res && context.res.body !== undefined) {
+      context.res.body += `data: ${JSON.stringify({ type: "error", text: "Failed to generate plan" })}\n\n`;
+    } else {
+      context.res = jsonResponse(500, { error: "Failed to generate plan", detail: err.message });
+    }
   }
 }
 
@@ -332,43 +398,44 @@ Return ONLY valid JSON (no markdown, no explanation):
 // Plan validation
 // ─────────────────────────────────────────
 function validatePlan(plan) {
-  const errors = [];
-  if (!plan || typeof plan !== "object") return ["Plan must be an object"];
-
-  const requiredKeys = ["push1", "pull1", "legs", "push2", "pull2"];
-  for (const key of requiredKeys) {
-    if (!plan[key]) errors.push(`Missing plan day: ${key}`);
-    else validatePlanDay(plan[key], key, errors);
-  }
-
-  return errors;
+  if (!plan || typeof plan !== "object" || Array.isArray(plan)) return ["Plan must be an object"];
+  const keys = Object.keys(plan);
+  if (!keys.length) return ["Plan must have at least one day"];
+  if (keys.length > 7) return ["Plan cannot have more than 7 days"];
+  return validatePlanDays(plan);
 }
 
-function validatePlanDay(day, key, errors) {
-  if (typeof day.name !== "string" || !day.name.length) {
-    errors.push(`${key}: name must be a non-empty string`);
-  }
-  if (typeof day.type !== "string" || !["PUSH", "PULL", "LEGS"].includes(day.type)) {
-    errors.push(`${key}: type must be PUSH, PULL, or LEGS`);
-  }
-  if (!Array.isArray(day.exercises)) {
-    errors.push(`${key}: exercises must be an array`);
-    return;
-  }
-
-  day.exercises.forEach((ex, idx) => {
-    if (typeof ex.name !== "string" || !ex.name.length) {
-      errors.push(`${key} exercise ${idx}: name required`);
+function validatePlanDays(days) {
+  const errors = [];
+  for (const [key, day] of Object.entries(days)) {
+    if (!/^[a-z0-9-]+$/.test(key) || key.length > 50) {
+      errors.push(`Day key "${key}" must be a lowercase alphanumeric slug`);
     }
-    const weight = Number(ex.w);
-    if (!Number.isFinite(weight) || weight < 5 || weight > 200) {
-      errors.push(`${key} exercise ${idx}: weight must be 5-200`);
+    if (!day || typeof day !== "object") {
+      errors.push(`Day "${key}" must be an object`);
+      continue;
     }
-    const sets = Number(ex.sets);
-    if (!Number.isInteger(sets) || sets < 2 || sets > 6) {
-      errors.push(`${key} exercise ${idx}: sets must be 2-6`);
+    if (typeof day.name !== "string" || !day.name.length) {
+      errors.push(`${key}: name must be a non-empty string`);
     }
-  });
+    if (day.type && !VALID_DAY_TYPES.has(day.type)) {
+      errors.push(`${key}: type "${day.type}" is not valid`);
+    }
+    if (!Array.isArray(day.exercises) || !day.exercises.length) {
+      errors.push(`${key}: exercises must be a non-empty array`);
+    } else {
+      day.exercises.forEach((ex, idx) => {
+        if (typeof ex.name !== "string" || !ex.name.length) {
+          errors.push(`${key} exercise ${idx}: name required`);
+        }
+        const sets = Number(ex.sets);
+        if (!Number.isInteger(sets) || sets < 1 || sets > 8) {
+          errors.push(`${key} exercise ${idx}: sets must be 1-8`);
+        }
+      });
+    }
+  }
+  return errors;
 }
 
 module.exports.validatePlan = validatePlan;
